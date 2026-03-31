@@ -1,0 +1,13 @@
+README.md
+pyproject.toml
+src/dive_stopwatch/__init__.py
+src/dive_stopwatch/__main__.py
+src/dive_stopwatch/cli.py
+src/dive_stopwatch/stopwatch.py
+src/dive_stopwatch.egg-info/PKG-INFO
+src/dive_stopwatch.egg-info/SOURCES.txt
+src/dive_stopwatch.egg-info/dependency_links.txt
+src/dive_stopwatch.egg-info/entry_points.txt
+src/dive_stopwatch.egg-info/requires.txt
+src/dive_stopwatch.egg-info/top_level.txt
+tests/test_stopwatch.py
