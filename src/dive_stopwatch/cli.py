@@ -123,8 +123,10 @@ def main() -> None:
                     result = dive.lap()
                     if result["event"] == "RB":
                         print(f"RB {result['clock']}  DT={result['DT']}")
-                    else:
+                    elif result["event"] == "LB":
                         print(f"LB {result['clock']}  BT={result['BT']}")
+                    else:
+                        print(f"{result['event']}{result['stop_number']} {result['clock']}")
                     continue
                 mark = stopwatch.lap()
                 print(
@@ -164,7 +166,18 @@ def main() -> None:
                 )
             elif command == "marks":
                 if mode is DeviceMode.DIVE:
-                    print(dive.session.summary() or "(no dive events)")
+                    if dive.stop_events:
+                        print(
+                            {
+                                "events": dive.session.summary(),
+                                "stop_events": [
+                                    f"{event.code}{event.stop_number} {event.timestamp.strftime('%H:%M:%S')}"
+                                    for event in dive.stop_events
+                                ],
+                            }
+                        )
+                    else:
+                        print(dive.session.summary() or "(no dive events)")
                     continue
                 if not stopwatch.marks:
                     print("(no marks)")
@@ -180,13 +193,23 @@ def main() -> None:
                     if dive.phase is DivePhase.CLEAN_TIME:
                         status = dive.clean_time_status()
                         print(
-                            f"phase={dive.phase.name} events={dive.session.summary()} CT={status['CT']}"
+                            f"phase={dive.phase.name} events={dive.session.summary()} "
+                            f"last_stop={_format_stop_event(dive.latest_stop_event())} CT={status['CT']}"
                         )
                     else:
-                        print(f"phase={dive.phase.name} events={dive.session.summary()}")
+                        print(
+                            f"phase={dive.phase.name} events={dive.session.summary()} "
+                            f"last_stop={_format_stop_event(dive.latest_stop_event())}"
+                        )
                 else:
                     print("Status is only used in dive mode.")
             else:
                 print("Unknown command. Type 'help'.")
         except RuntimeError as exc:
             print(f"Error: {exc}")
+
+
+def _format_stop_event(event: object) -> str:
+    if event is None:
+        return "None"
+    return f"{event.code}{event.stop_number} {event.timestamp.strftime('%H:%M:%S')}"

@@ -50,6 +50,15 @@ class CleanTimeTimer:
         return self.remaining_seconds(now) == 0
 
 
+@dataclass(frozen=True)
+class StopEvent:
+    """An ascent stop arrival/departure marker."""
+
+    code: str
+    timestamp: datetime
+    stop_number: int
+
+
 class DiveController:
     """Interpret stopwatch-style button presses as dive events."""
 
@@ -57,6 +66,8 @@ class DiveController:
         self.session = DiveSession()
         self.phase = DivePhase.READY
         self.clean_time: CleanTimeTimer | None = None
+        self.stop_events: list[StopEvent] = []
+        self._awaiting_leave_stop = False
 
     def start(self, at: datetime | None = None) -> dict[str, str | int]:
         if self.phase is not DivePhase.READY:
@@ -93,11 +104,27 @@ class DiveController:
                 "phase": self.phase.name,
             }
 
-        raise RuntimeError("Lap is only available at RB and LB during dive mode.")
+        if self.phase is DivePhase.ASCENT:
+            timestamp = at or datetime.now()
+            code = "L" if self._awaiting_leave_stop else "R"
+            stop_number = (len(self.stop_events) // 2) + 1
+            stop_event = StopEvent(code=code, timestamp=timestamp, stop_number=stop_number)
+            self.stop_events.append(stop_event)
+            self._awaiting_leave_stop = not self._awaiting_leave_stop
+            return {
+                "event": stop_event.code,
+                "clock": stop_event.timestamp.strftime("%H:%M:%S"),
+                "stop_number": stop_event.stop_number,
+                "phase": self.phase.name,
+            }
+
+        raise RuntimeError("Lap is only available at RB, LB, and ascent stop transitions during dive mode.")
 
     def stop(self, at: datetime | None = None) -> dict[str, str | int]:
         if self.phase is not DivePhase.ASCENT:
             raise RuntimeError("Stop is only available when surfacing from the dive.")
+        if self._awaiting_leave_stop:
+            raise RuntimeError("Record L before surfacing from the current stop.")
 
         event = self.session.reach_surface(at)
         self.phase = DivePhase.CLEAN_TIME
@@ -119,6 +146,8 @@ class DiveController:
         self.session = DiveSession()
         self.phase = DivePhase.READY
         self.clean_time = None
+        self.stop_events.clear()
+        self._awaiting_leave_stop = False
 
     def clean_time_status(self, now: datetime | None = None) -> dict[str, str | bool]:
         if self.clean_time is None:
@@ -128,3 +157,8 @@ class DiveController:
             "CT": self.clean_time.remaining_display(now),
             "complete": self.clean_time.complete(now),
         }
+
+    def latest_stop_event(self) -> StopEvent | None:
+        if not self.stop_events:
+            return None
+        return self.stop_events[-1]

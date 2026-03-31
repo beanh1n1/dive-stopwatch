@@ -55,3 +55,32 @@ class DiveControllerTests(unittest.TestCase):
         self.assertFalse(status["complete"])
         self.assertEqual(done["CT"], "00:00")
         self.assertTrue(done["complete"])
+
+    def test_lap_after_lb_toggles_r_then_l(self) -> None:
+        controller = DiveController()
+        controller.start(datetime(2026, 3, 30, 9, 0, 0))
+        controller.lap(datetime(2026, 3, 30, 9, 3, 1))
+        controller.lap(datetime(2026, 3, 30, 9, 25, 1))
+
+        reach_stop = controller.lap(datetime(2026, 3, 30, 9, 28, 0))
+        leave_stop = controller.lap(datetime(2026, 3, 30, 9, 31, 0))
+
+        self.assertEqual(reach_stop["event"], "R")
+        self.assertEqual(leave_stop["event"], "L")
+        self.assertEqual(reach_stop["stop_number"], 1)
+        self.assertEqual(leave_stop["stop_number"], 1)
+
+        second_reach = controller.lap(datetime(2026, 3, 30, 9, 34, 0))
+        second_leave = controller.lap(datetime(2026, 3, 30, 9, 36, 0))
+        self.assertEqual(second_reach["stop_number"], 2)
+        self.assertEqual(second_leave["stop_number"], 2)
+
+    def test_stop_is_blocked_while_still_at_stop(self) -> None:
+        controller = DiveController()
+        controller.start(datetime(2026, 3, 30, 9, 0, 0))
+        controller.lap(datetime(2026, 3, 30, 9, 3, 1))
+        controller.lap(datetime(2026, 3, 30, 9, 25, 1))
+        controller.lap(datetime(2026, 3, 30, 9, 28, 0))
+
+        with self.assertRaises(RuntimeError):
+            controller.stop(datetime(2026, 3, 30, 9, 33, 5))

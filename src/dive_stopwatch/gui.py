@@ -42,7 +42,7 @@ class DiveStopwatchApp:
         self.status_text = tk.StringVar(value="Ready.")
         self.event_values: dict[str, tk.StringVar] = {
             key: tk.StringVar(value="--")
-            for key in ("LS", "RB", "LB", "RS", "DT", "BT", "AT", "TDT", "TTD")
+            for key in ("LS", "RB", "LB", "RS", "R", "L", "DT", "BT", "AT", "TDT", "TTD")
         }
 
         self._build_ui()
@@ -138,7 +138,8 @@ class DiveStopwatchApp:
             pady=(0, 12),
         )
 
-        for row_index, key in enumerate(("LS", "RB", "LB", "RS", "DT", "BT", "AT", "TDT", "TTD"), start=1):
+        row_index = 1
+        for key in ("LS", "RB", "LB", "RS"):
             ttk.Label(side_panel, text=key, style="EventKey.TLabel").grid(row=row_index, column=0, sticky="w", pady=4)
             ttk.Label(side_panel, textvariable=self.event_values[key], style="EventValue.TLabel").grid(
                 row=row_index,
@@ -146,15 +147,43 @@ class DiveStopwatchApp:
                 sticky="e",
                 pady=4,
             )
+            row_index += 1
+
+        ttk.Separator(side_panel, orient="horizontal").grid(row=row_index, column=0, columnspan=2, sticky="ew", pady=(8, 8))
+        row_index += 1
+
+        for key in ("R", "L"):
+            ttk.Label(side_panel, text=key, style="EventKey.TLabel").grid(row=row_index, column=0, sticky="w", pady=4)
+            ttk.Label(side_panel, textvariable=self.event_values[key], style="EventValue.TLabel").grid(
+                row=row_index,
+                column=1,
+                sticky="e",
+                pady=4,
+            )
+            row_index += 1
+
+        ttk.Separator(side_panel, orient="horizontal").grid(row=row_index, column=0, columnspan=2, sticky="ew", pady=(8, 8))
+        row_index += 1
+
+        for key in ("DT", "BT", "AT", "TDT", "TTD"):
+            ttk.Label(side_panel, text=key, style="EventKey.TLabel").grid(row=row_index, column=0, sticky="w", pady=4)
+            ttk.Label(side_panel, textvariable=self.event_values[key], style="EventValue.TLabel").grid(
+                row=row_index,
+                column=1,
+                sticky="e",
+                pady=4,
+            )
+            row_index += 1
 
         hint = (
             "Dive mode flow:\n"
             "Start = LS\n"
             "Lap = RB, then LB\n"
+            "Lap after LB = R then L\n"
             "Stop = RS and begin CT"
         )
         ttk.Label(side_panel, text=hint, style="Status.TLabel", justify="left", wraplength=240).grid(
-            row=11,
+            row=row_index,
             column=0,
             columnspan=2,
             sticky="ew",
@@ -201,8 +230,10 @@ class DiveStopwatchApp:
                 result = self.dive.lap()
                 if result["event"] == "RB":
                     self.status_text.set(f"RB {result['clock']}   DT {result['DT']}")
-                else:
+                elif result["event"] == "LB":
                     self.status_text.set(f"LB {result['clock']}   BT {result['BT']}")
+                else:
+                    self.status_text.set(f"{result['event']}{result['stop_number']}   {result['clock']}")
             else:
                 mark = self.stopwatch.lap()
                 self.status_text.set(
@@ -266,7 +297,16 @@ class DiveStopwatchApp:
     def _update_dive_summary(self) -> None:
         summary = self.dive.session.summary()
         for key, variable in self.event_values.items():
-            variable.set(str(summary.get(key, "--")))
+            variable.set("--")
+        for key in ("LS", "RB", "LB", "RS", "DT", "BT", "AT", "TDT", "TTD"):
+            self.event_values[key].set(str(summary.get(key, "--")))
+
+        latest_r = next((event for event in reversed(self.dive.stop_events) if event.code == "R"), None)
+        latest_l = next((event for event in reversed(self.dive.stop_events) if event.code == "L"), None)
+        if latest_r is not None:
+            self.event_values["R"].set(f"R{latest_r.stop_number} {latest_r.timestamp.strftime('%H:%M:%S')}")
+        if latest_l is not None:
+            self.event_values["L"].set(f"L{latest_l.stop_number} {latest_l.timestamp.strftime('%H:%M:%S')}")
 
     def _primary_dive_display(self) -> str:
         summary = self.dive.session.summary()
@@ -287,7 +327,10 @@ class DiveStopwatchApp:
         if self.dive.phase in {DivePhase.DESCENT, DivePhase.BOTTOM} and "LS" in summary:
             return f"Running from LS   LS {summary['LS']}"
         if self.dive.phase is DivePhase.ASCENT and "LB" in summary:
-            return f"Lap from LB   LB {summary['LB']}"
+            latest_stop = self.dive.latest_stop_event()
+            if latest_stop is None:
+                return f"Lap from LB   LB {summary['LB']}"
+            return f"{latest_stop.code}{latest_stop.stop_number}   {latest_stop.timestamp.strftime('%H:%M:%S')}"
         if self.dive.phase is DivePhase.CLEAN_TIME:
             return (
                 f"RS {summary.get('RS', '--')}   "
@@ -321,10 +364,15 @@ class DiveStopwatchApp:
         return format_tenths(elapsed)
 
     def _live_ascent_display(self) -> str:
-        lb_event = self.dive.session.events.get("LB")
-        if lb_event is None:
+        anchor = self.dive.session.events.get("LB")
+        latest_stop = self.dive.latest_stop_event()
+        if latest_stop is not None and latest_stop.code == "R":
+            anchor_time = latest_stop.timestamp
+        elif anchor is not None:
+            anchor_time = anchor.timestamp
+        else:
             return "--:--.-"
-        elapsed = (datetime.now() - lb_event.timestamp).total_seconds()
+        elapsed = (datetime.now() - anchor_time).total_seconds()
         return format_tenths(elapsed)
 
 
