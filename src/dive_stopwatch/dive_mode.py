@@ -68,8 +68,19 @@ class DiveController:
         self.clean_time: CleanTimeTimer | None = None
         self.stop_events: list[StopEvent] = []
         self._awaiting_leave_stop = False
+        self.delay_to_first_stop_flagged = False
+        self.delay_to_first_stop_zone: str | None = None
+        self.delay_zone_prompt_active = False
 
     def start(self, at: datetime | None = None) -> dict[str, str | int]:
+        if self.phase is DivePhase.ASCENT and self.delay_zone_prompt_active:
+            self.delay_to_first_stop_zone = "deeper_than_50"
+            self.delay_zone_prompt_active = False
+            return {
+                "event": "DELAY_ZONE",
+                "value": "deeper_than_50",
+                "phase": self.phase.name,
+            }
         if self.phase is not DivePhase.READY:
             raise RuntimeError("Start is only available before the dive begins.")
 
@@ -105,12 +116,22 @@ class DiveController:
             }
 
         if self.phase is DivePhase.ASCENT:
+            if self.delay_zone_prompt_active:
+                self.delay_to_first_stop_zone = "shallower_than_50"
+                self.delay_zone_prompt_active = False
+                return {
+                    "event": "DELAY_ZONE",
+                    "value": "shallower_than_50",
+                    "phase": self.phase.name,
+                }
             timestamp = at or datetime.now()
             code = "L" if self._awaiting_leave_stop else "R"
             stop_number = (len(self.stop_events) // 2) + 1
             stop_event = StopEvent(code=code, timestamp=timestamp, stop_number=stop_number)
             self.stop_events.append(stop_event)
             self._awaiting_leave_stop = not self._awaiting_leave_stop
+            if code == "R" and stop_number == 1:
+                self.delay_zone_prompt_active = False
             return {
                 "event": stop_event.code,
                 "clock": stop_event.timestamp.strftime("%H:%M:%S"),
@@ -148,6 +169,9 @@ class DiveController:
         self.clean_time = None
         self.stop_events.clear()
         self._awaiting_leave_stop = False
+        self.delay_to_first_stop_flagged = False
+        self.delay_to_first_stop_zone = None
+        self.delay_zone_prompt_active = False
 
     def clean_time_status(self, now: datetime | None = None) -> dict[str, str | bool]:
         if self.clean_time is None:
@@ -162,3 +186,22 @@ class DiveController:
         if not self.stop_events:
             return None
         return self.stop_events[-1]
+
+    def first_stop_arrival_event(self) -> StopEvent | None:
+        for event in self.stop_events:
+            if event.code == "R":
+                return event
+        return None
+
+    def flag_delay_to_first_stop(self) -> dict[str, str]:
+        if self.phase is not DivePhase.ASCENT:
+            raise RuntimeError("Delay can only be flagged during ascent.")
+        if self.first_stop_arrival_event() is not None:
+            raise RuntimeError("Delay-to-first-stop prompt is only available before R1.")
+        if self._awaiting_leave_stop:
+            raise RuntimeError("Delay-to-first-stop prompt is not available while at a stop.")
+
+        self.delay_to_first_stop_flagged = True
+        self.delay_to_first_stop_zone = None
+        self.delay_zone_prompt_active = True
+        return {"event": "DELAY_PROMPT", "phase": self.phase.name}

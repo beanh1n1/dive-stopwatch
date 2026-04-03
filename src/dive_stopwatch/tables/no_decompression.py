@@ -12,6 +12,7 @@ from dataclasses import dataclass
 __all__ = [
     "NoDecompressionRow",
     "lookup_no_decompression_limit",
+    "lookup_no_decompression_limit_for_depth",
     "lookup_repetitive_group",
 ]
 
@@ -207,6 +208,84 @@ NO_DECOMPRESSION_TABLE: dict[int, NoDecompressionRow] = {
         (("A", 7), ("B", 12), ("C", 17), ("D", 22), ("E", 28), ("F", 33), ("G", 39), ("H", 45), ("I", 51), ("J", 57), ("Z", 63)),
         "Z",
     ),
+    70: NoDecompressionRow(
+        70,
+        48,
+        (("A", 6), ("B", 10), ("C", 14), ("D", 19), ("E", 23), ("F", 28), ("G", 32), ("H", 37), ("I", 42), ("J", 47), ("Z", 48)),
+        "Z",
+    ),
+    80: NoDecompressionRow(
+        80,
+        39,
+        (("A", 5), ("B", 9), ("C", 12), ("D", 16), ("E", 20), ("F", 24), ("G", 28), ("H", 32), ("I", 36), ("Z", 39)),
+        "Z",
+    ),
+    90: NoDecompressionRow(
+        90,
+        33,
+        (("A", 4), ("B", 7), ("C", 11), ("D", 14), ("E", 17), ("F", 21), ("G", 24), ("H", 28), ("I", 31), ("Z", 33)),
+        "Z",
+    ),
+    100: NoDecompressionRow(
+        100,
+        25,
+        (("A", 4), ("B", 6), ("C", 9), ("D", 12), ("E", 15), ("F", 18), ("G", 21), ("Z", 25)),
+        "Z",
+    ),
+    110: NoDecompressionRow(
+        110,
+        20,
+        (("A", 3), ("B", 6), ("C", 8), ("D", 11), ("E", 14), ("F", 16), ("G", 19), ("Z", 20)),
+        "Z",
+    ),
+    120: NoDecompressionRow(
+        120,
+        15,
+        (("A", 3), ("B", 5), ("C", 7), ("D", 10), ("E", 12), ("Z", 15)),
+        "Z",
+    ),
+    130: NoDecompressionRow(
+        130,
+        12,
+        (("A", 2), ("B", 4), ("C", 6), ("D", 9), ("E", 11), ("Z", 12)),
+        "Z",
+    ),
+    140: NoDecompressionRow(
+        140,
+        10,
+        (("A", 2), ("B", 4), ("C", 6), ("D", 8), ("Z", 10)),
+        "Z",
+    ),
+    150: NoDecompressionRow(
+        150,
+        8,
+        (("A", 3), ("B", 5), ("C", 7), ("Z", 8)),
+        "Z",
+    ),
+    160: NoDecompressionRow(
+        160,
+        7,
+        (("A", 3), ("B", 5), ("C", 6), ("Z", 7)),
+        "Z",
+    ),
+    170: NoDecompressionRow(
+        170,
+        6,
+        (("A", 4), ("Z", 6)),
+        "Z",
+    ),
+    180: NoDecompressionRow(
+        180,
+        6,
+        (("A", 4), ("B", 5), ("Z", 6)),
+        "Z",
+    ),
+    190: NoDecompressionRow(
+        190,
+        5,
+        (("A", 3), ("Z", 5)),
+        "Z",
+    ),
 }
 
 
@@ -215,6 +294,15 @@ def lookup_no_decompression_limit(depth_fsw: int) -> int | None:
     if row is None:
         raise KeyError(f"Unsupported no-decompression depth: {depth_fsw} fsw")
     return row.no_stop_limit_min
+
+
+def lookup_no_decompression_limit_for_depth(depth_fsw: int) -> tuple[int, int | None]:
+    """Return the rounded-up table depth and no-stop limit for a user depth."""
+
+    for supported_depth in sorted(NO_DECOMPRESSION_TABLE):
+        if depth_fsw <= supported_depth:
+            return supported_depth, lookup_no_decompression_limit(supported_depth)
+    raise KeyError(f"No supported no-decompression table for depth {depth_fsw} fsw")
 
 
 def lookup_repetitive_group(depth_fsw: int, bottom_time_min: int) -> str:

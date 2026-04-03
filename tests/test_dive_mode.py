@@ -84,3 +84,29 @@ class DiveControllerTests(unittest.TestCase):
 
         with self.assertRaises(RuntimeError):
             controller.stop(datetime(2026, 3, 30, 9, 33, 5))
+
+    def test_delay_to_first_stop_prompt_uses_start_for_deeper_than_50(self) -> None:
+        controller = DiveController()
+        controller.start(datetime(2026, 3, 30, 9, 0, 0))
+        controller.lap(datetime(2026, 3, 30, 9, 3, 1))
+        controller.lap(datetime(2026, 3, 30, 9, 25, 1))
+
+        controller.flag_delay_to_first_stop()
+        result = controller.start(datetime(2026, 3, 30, 9, 27, 0))
+
+        self.assertEqual(result["event"], "DELAY_ZONE")
+        self.assertEqual(controller.delay_to_first_stop_zone, "deeper_than_50")
+        self.assertFalse(controller.delay_zone_prompt_active)
+
+    def test_delay_to_first_stop_prompt_uses_lap_for_shallower_than_50(self) -> None:
+        controller = DiveController()
+        controller.start(datetime(2026, 3, 30, 9, 0, 0))
+        controller.lap(datetime(2026, 3, 30, 9, 3, 1))
+        controller.lap(datetime(2026, 3, 30, 9, 25, 1))
+
+        controller.flag_delay_to_first_stop()
+        result = controller.lap(datetime(2026, 3, 30, 9, 27, 0))
+
+        self.assertEqual(result["event"], "DELAY_ZONE")
+        self.assertEqual(controller.delay_to_first_stop_zone, "shallower_than_50")
+        self.assertFalse(controller.delay_zone_prompt_active)
