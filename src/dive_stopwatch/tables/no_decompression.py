@@ -14,6 +14,7 @@ __all__ = [
     "lookup_no_decompression_limit",
     "lookup_no_decompression_limit_for_depth",
     "lookup_repetitive_group",
+    "lookup_repetitive_group_schedule",
 ]
 
 
@@ -316,3 +317,22 @@ def lookup_repetitive_group(depth_fsw: int, bottom_time_min: int) -> str:
         if bottom_time_min <= threshold:
             return group
     return row.max_group
+
+
+def lookup_repetitive_group_schedule(depth_fsw: int, bottom_time_min: int) -> tuple[str, int]:
+    """Return the rounded table row threshold and resulting repetitive group."""
+
+    row = NO_DECOMPRESSION_TABLE.get(depth_fsw)
+    if row is None:
+        raise KeyError(f"Unsupported no-decompression depth: {depth_fsw} fsw")
+    if bottom_time_min < 0:
+        raise ValueError("Bottom time cannot be negative.")
+
+    for group, threshold in row.thresholds_min:
+        if bottom_time_min <= threshold:
+            return group, threshold
+
+    if row.no_stop_limit_min is None:
+        last_group, last_threshold = row.thresholds_min[-1]
+        return row.max_group, last_threshold
+    return row.max_group, row.no_stop_limit_min

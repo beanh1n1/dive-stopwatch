@@ -166,13 +166,21 @@ def main() -> None:
                 )
             elif command == "marks":
                 if mode is DeviceMode.DIVE:
-                    if dive.stop_events:
+                    if dive.descent_hold_events or dive.ascent_stop_events or dive.ascent_delay_events:
                         print(
                             {
                                 "events": dive.session.summary(),
-                                "stop_events": [
-                                    f"{event.code}{event.stop_number} {event.timestamp.strftime('%H:%M:%S')}"
-                                    for event in dive.stop_events
+                                "descent_holds": [
+                                    f"Hold{event.kind.title()}{event.index} {event.timestamp.strftime('%H:%M:%S')}"
+                                    for event in dive.descent_hold_events
+                                ],
+                                "ascent_stops": [
+                                    f"{event.kind.title()}Stop{event.index} {event.timestamp.strftime('%H:%M:%S')}"
+                                    for event in dive.ascent_stop_events
+                                ],
+                                "ascent_delays": [
+                                    f"Delay{event.kind.title()}{event.index} depth={event.depth_fsw} {event.timestamp.strftime('%H:%M:%S')}"
+                                    for event in dive.ascent_delay_events
                                 ],
                             }
                         )
@@ -194,12 +202,19 @@ def main() -> None:
                         status = dive.clean_time_status()
                         print(
                             f"phase={dive.phase.name} events={dive.session.summary()} "
-                            f"last_stop={_format_stop_event(dive.latest_stop_event())} CT={status['CT']}"
+                            f"last_hold={_format_descent_hold_event(dive.latest_stop_event())} "
+                            f"last_arrival={_format_ascent_stop_event(dive.latest_arrival_event())} "
+                            f"last_departure={_format_ascent_stop_event(dive.latest_stop_departure_event())} "
+                            f"last_delay={_format_ascent_delay_event(dive.latest_ascent_delay_event())} "
+                            f"CT={status['CT']}"
                         )
                     else:
                         print(
                             f"phase={dive.phase.name} events={dive.session.summary()} "
-                            f"last_stop={_format_stop_event(dive.latest_stop_event())}"
+                            f"last_hold={_format_descent_hold_event(dive.latest_stop_event())} "
+                            f"last_arrival={_format_ascent_stop_event(dive.latest_arrival_event())} "
+                            f"last_departure={_format_ascent_stop_event(dive.latest_stop_departure_event())} "
+                            f"last_delay={_format_ascent_delay_event(dive.latest_ascent_delay_event())}"
                         )
                 else:
                     print("Status is only used in dive mode.")
@@ -209,7 +224,19 @@ def main() -> None:
             print(f"Error: {exc}")
 
 
-def _format_stop_event(event: object) -> str:
+def _format_descent_hold_event(event: object) -> str:
     if event is None:
         return "None"
-    return f"{event.code}{event.stop_number} {event.timestamp.strftime('%H:%M:%S')}"
+    return f"Hold{event.kind.title()}{event.index} {event.timestamp.strftime('%H:%M:%S')}"
+
+
+def _format_ascent_stop_event(event: object) -> str:
+    if event is None:
+        return "None"
+    return f"{event.kind.title()}Stop{event.index} {event.timestamp.strftime('%H:%M:%S')}"
+
+
+def _format_ascent_delay_event(event: object) -> str:
+    if event is None:
+        return "None"
+    return f"Delay{event.kind.title()}{event.index} depth={event.depth_fsw} {event.timestamp.strftime('%H:%M:%S')}"
