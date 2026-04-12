@@ -19,7 +19,7 @@ from dive_stopwatch.tables.air_decompression import (
     lookup_decompression_row,
     planned_travel_time_to_first_stop_seconds,
 )
-from dive_stopwatch.dive_session import DiveSession
+from dive_stopwatch.v2.dive_session import DiveSession
 from dive_stopwatch.tables.no_decompression import (
     lookup_no_decompression_limit,
     lookup_repetitive_group,

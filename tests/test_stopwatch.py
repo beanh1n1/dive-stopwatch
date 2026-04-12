@@ -1,6 +1,6 @@
 import unittest
 
-from dive_stopwatch.stopwatch import Stopwatch, StopwatchManager, format_hhmmss
+from dive_stopwatch.v2.stopwatch_core import Stopwatch, StopwatchManager, format_hhmmss
 
 
 class StopwatchTests(unittest.TestCase):

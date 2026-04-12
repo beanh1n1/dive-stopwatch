@@ -7,7 +7,7 @@ from datetime import datetime, timedelta
 from enum import Enum, auto
 from typing import Literal
 
-from dive_stopwatch.dive_session import DiveSession
+from dive_stopwatch.v2.dive_session import DiveSession
 
 __all__ = [
     "CleanTimeTimer",

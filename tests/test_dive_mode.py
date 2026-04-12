@@ -1,7 +1,7 @@
 from datetime import datetime, timedelta
 import unittest
 
-from dive_stopwatch.dive_mode import DiveController, DivePhase
+from dive_stopwatch.v2.dive_controller import DiveController, DivePhase
 
 
 class DiveControllerTests(unittest.TestCase):
@@ -195,4 +195,3 @@ class DiveControllerTests(unittest.TestCase):
         self.assertEqual(reach_30["stop_number"], 3)
         self.assertEqual(controller.latest_arrival_event().stop_number, 3)
         self.assertEqual(controller.latest_stop_departure_event().stop_number, 2)
-

@@ -12,7 +12,7 @@ requires-python = ">=3.11"
 dev = ["pytest>=8.0"]
 
 [project.scripts]
-dive-stopwatch = "dive_stopwatch.cli:main"
+dive-stopwatch = "dive_stopwatch.v2.main:main"
 
 [tool.setuptools]
 package-dir = {"" = "src"}

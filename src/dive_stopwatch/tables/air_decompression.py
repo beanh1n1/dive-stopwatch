@@ -8,7 +8,8 @@ from enum import Enum
 import math
 from pathlib import Path
 
-from dive_stopwatch.dive_session import DiveSession, ceil_minutes
+from dive_stopwatch.v2.delay_rules import evaluate_between_stops_delay_rule, evaluate_first_stop_delay_rule
+from dive_stopwatch.v2.dive_session import DiveSession, ceil_minutes
 from dive_stopwatch.tables.no_decompression import lookup_repetitive_group
 
 __all__ = [
@@ -370,14 +371,20 @@ def evaluate_first_stop_arrival(
         raise ValueError("Planned AIR decompression profile is missing a first stop.")
     stop_timer_starts_after_seconds = max(actual_tt1st_seconds, float(planned_tt1st_seconds))
 
-    if actual_tt1st_seconds < planned_tt1st_seconds:
+    delay_rule = evaluate_first_stop_delay_rule(
+        actual_tt1st_seconds=actual_tt1st_seconds,
+        planned_tt1st_seconds=planned_tt1st_seconds,
+        delay_depth_fsw=delay_depth_fsw,
+    )
+
+    if delay_rule.outcome == "early_arrival":
         return FirstStopArrivalEvaluation(
             max_depth_fsw=max_depth_fsw,
             planned_profile=planned_profile,
             active_profile=planned_profile,
             actual_tt1st_seconds=actual_tt1st_seconds,
             planned_tt1st_seconds=planned_tt1st_seconds,
-            delay_seconds=actual_tt1st_seconds - planned_tt1st_seconds,
+            delay_seconds=delay_rule.delay_seconds,
             rounded_delay_minutes=0,
             stop_timer_starts_after_seconds=stop_timer_starts_after_seconds,
             outcome="early_arrival",
@@ -385,15 +392,14 @@ def evaluate_first_stop_arrival(
             missed_deeper_stop=False,
         )
 
-    delay_seconds = actual_tt1st_seconds - planned_tt1st_seconds
-    if delay_seconds <= 60:
+    if delay_rule.outcome == "ignore_delay":
         return FirstStopArrivalEvaluation(
             max_depth_fsw=max_depth_fsw,
             planned_profile=planned_profile,
             active_profile=planned_profile,
             actual_tt1st_seconds=actual_tt1st_seconds,
             planned_tt1st_seconds=planned_tt1st_seconds,
-            delay_seconds=delay_seconds,
+            delay_seconds=delay_rule.delay_seconds,
             rounded_delay_minutes=0,
             stop_timer_starts_after_seconds=stop_timer_starts_after_seconds,
             outcome="ignore_delay",
@@ -401,28 +407,26 @@ def evaluate_first_stop_arrival(
             missed_deeper_stop=False,
         )
 
-    if delay_depth_fsw is not None and delay_depth_fsw <= 50:
-        rounded_delay_minutes = ceil_minutes(delay_seconds)
-        active_profile = _add_delay_to_first_stop(planned_profile, rounded_delay_minutes)
+    if delay_rule.outcome == "add_to_first_stop":
+        active_profile = _add_delay_to_first_stop(planned_profile, delay_rule.rounded_delay_minutes)
         return FirstStopArrivalEvaluation(
             max_depth_fsw=max_depth_fsw,
             planned_profile=planned_profile,
             active_profile=active_profile,
             actual_tt1st_seconds=actual_tt1st_seconds,
             planned_tt1st_seconds=planned_tt1st_seconds,
-            delay_seconds=delay_seconds,
-            rounded_delay_minutes=rounded_delay_minutes,
+            delay_seconds=delay_rule.delay_seconds,
+            rounded_delay_minutes=delay_rule.rounded_delay_minutes,
             stop_timer_starts_after_seconds=stop_timer_starts_after_seconds,
             outcome="add_to_first_stop",
             schedule_changed=True,
             missed_deeper_stop=False,
         )
 
-    rounded_delay_minutes = ceil_minutes(delay_seconds)
     recomputed_profile = build_basic_decompression_profile(
         mode=mode,
         max_depth_fsw=max_depth_fsw,
-        bottom_time_min=session.bottom_time_minutes() + rounded_delay_minutes,
+        bottom_time_min=session.bottom_time_minutes() + delay_rule.rounded_delay_minutes,
     )
     active_profile = _apply_missed_deeper_stops(recomputed_profile, planned_profile.first_stop_depth_fsw)
     schedule_changed = _profiles_require_schedule_change(planned_profile, active_profile)
@@ -437,8 +441,8 @@ def evaluate_first_stop_arrival(
         active_profile=active_profile,
         actual_tt1st_seconds=actual_tt1st_seconds,
         planned_tt1st_seconds=planned_tt1st_seconds,
-        delay_seconds=delay_seconds,
-        rounded_delay_minutes=rounded_delay_minutes,
+        delay_seconds=delay_rule.delay_seconds,
+        rounded_delay_minutes=delay_rule.rounded_delay_minutes,
         stop_timer_starts_after_seconds=stop_timer_starts_after_seconds,
         outcome="recompute",
         schedule_changed=schedule_changed,
@@ -457,41 +461,30 @@ def evaluate_between_stops_delay(
 ) -> BetweenStopsDelayEvaluation:
     """Apply between-stop or leaving-stop delay rules to an AIR schedule."""
 
-    delay_seconds = actual_elapsed_seconds - planned_elapsed_seconds
-    if delay_seconds <= 60:
+    delay_rule = evaluate_between_stops_delay_rule(
+        actual_elapsed_seconds=actual_elapsed_seconds,
+        planned_elapsed_seconds=planned_elapsed_seconds,
+        delay_depth_fsw=delay_depth_fsw,
+    )
+
+    if delay_rule.outcome == "ignore_delay":
         return BetweenStopsDelayEvaluation(
             max_depth_fsw=max_depth_fsw,
             planned_profile=planned_profile,
             active_profile=planned_profile,
             actual_elapsed_seconds=actual_elapsed_seconds,
             planned_elapsed_seconds=planned_elapsed_seconds,
-            delay_seconds=delay_seconds,
+            delay_seconds=delay_rule.delay_seconds,
             rounded_delay_minutes=0,
             delay_depth_fsw=delay_depth_fsw,
             outcome="ignore_delay",
             schedule_changed=False,
         )
-
-    if delay_depth_fsw <= 50:
-        return BetweenStopsDelayEvaluation(
-            max_depth_fsw=max_depth_fsw,
-            planned_profile=planned_profile,
-            active_profile=planned_profile,
-            actual_elapsed_seconds=actual_elapsed_seconds,
-            planned_elapsed_seconds=planned_elapsed_seconds,
-            delay_seconds=delay_seconds,
-            rounded_delay_minutes=0,
-            delay_depth_fsw=delay_depth_fsw,
-            outcome="ignore_delay",
-            schedule_changed=False,
-        )
-
-    rounded_delay_minutes = ceil_minutes(delay_seconds)
     base_bottom_time = planned_profile.table_bottom_time_min or session.bottom_time_minutes()
     recomputed_profile = build_basic_decompression_profile(
         mode=mode,
         max_depth_fsw=max_depth_fsw,
-        bottom_time_min=base_bottom_time + rounded_delay_minutes,
+        bottom_time_min=base_bottom_time + delay_rule.rounded_delay_minutes,
     )
     active_profile = _discard_missed_deeper_stops(recomputed_profile, delay_depth_fsw)
     remaining_planned_profile = _discard_missed_deeper_stops(planned_profile, delay_depth_fsw)
@@ -502,8 +495,8 @@ def evaluate_between_stops_delay(
         active_profile=active_profile,
         actual_elapsed_seconds=actual_elapsed_seconds,
         planned_elapsed_seconds=planned_elapsed_seconds,
-        delay_seconds=delay_seconds,
-        rounded_delay_minutes=rounded_delay_minutes,
+        delay_seconds=delay_rule.delay_seconds,
+        rounded_delay_minutes=delay_rule.rounded_delay_minutes,
         delay_depth_fsw=delay_depth_fsw,
         outcome="recompute" if schedule_changed else "ignore_delay",
         schedule_changed=schedule_changed,

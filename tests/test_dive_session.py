@@ -1,7 +1,7 @@
 from datetime import datetime
 import unittest
 
-from dive_stopwatch.dive_session import DiveSession
+from dive_stopwatch.v2.dive_session import DiveSession
 
 
 class DiveSessionTests(unittest.TestCase):
