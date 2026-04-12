@@ -1,2 +1,0 @@
-[console_scripts]
-dive-stopwatch = dive_stopwatch.v2.main:main

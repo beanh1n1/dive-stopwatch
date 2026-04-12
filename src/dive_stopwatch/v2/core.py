@@ -1,26 +1,50 @@
+"""EngineV2: central coordinator for button intents and runtime state.
+
+Plain-English model:
+- The GUI sends high-level intents (PRIMARY, SECONDARY, MODE, RESET).
+- EngineV2 translates those intents into dive/stopwatch actions.
+- Snapshot building is delegated to the kernel pipeline so rendering rules
+  are separated from input handling.
+"""
+
 from __future__ import annotations
 
 from datetime import datetime, timedelta
-import math
 from typing import Callable
 
-from dive_stopwatch.tables import (
+from dive_stopwatch.v2.tables import (
     DecompressionMode,
     build_air_o2_oxygen_shift_plan,
-    build_basic_decompression_profile,
-    build_basic_decompression_profile_for_session,
 )
-from .depth_estimation import descent_hold_depth_for_display, estimate_current_depth
+from .decision_resolver import DecisionResolver
 from .dive_controller import DiveController, DivePhase
-from .dive_session import format_minutes_seconds
+from .facts import DiveFacts, FactsBuilder
 from .models import AirBreakEventV2, IntentV2, ModeV2, SnapshotV2, StateV2
-from .profile_helpers import next_stop_instruction, next_stop_text
-from .presenter import build_snapshot, format_tenths, status_from_state, stopwatch_primary_text
+from .profile_helpers import next_stop_text
+from .presenter import format_tenths
+from .profile_resolver import ProfileResolver
+from .runtime_context import RuntimeContextBuilder
+from .snapshot_composer import SnapshotComposer
+from .kernel_orchestrator import KernelOrchestrator
 
 
 class EngineV2:
     def __init__(self, now_provider: Callable[[], datetime] | None = None) -> None:
         self.state = StateV2()
+        # These collaborators isolate each concern:
+        # facts -> profile lookup -> runtime flags -> decision -> snapshot fields.
+        self._facts_builder = FactsBuilder()
+        self._profile_resolver = ProfileResolver()
+        self._runtime_context_builder = RuntimeContextBuilder()
+        self._snapshot_composer = SnapshotComposer()
+        self._decision_resolver = DecisionResolver()
+        self._kernel_orchestrator = KernelOrchestrator(
+            facts_builder=self._facts_builder,
+            profile_resolver=self._profile_resolver,
+            runtime_context_builder=self._runtime_context_builder,
+            decision_resolver=self._decision_resolver,
+            snapshot_composer=self._snapshot_composer,
+        )
         self._now_provider = now_provider or datetime.now
         self._test_time_offset_seconds = 0.0
 
@@ -45,8 +69,10 @@ class EngineV2:
 
     def set_depth_text(self, raw: str) -> None:
         self.state.depth_text = raw
+        self._invalidate_runtime_caches()
 
     def dispatch(self, intent: IntentV2) -> None:
+        # Intent routing: each physical button press maps to one intent.
         if intent is IntentV2.MODE:
             self._cycle_mode()
             return
@@ -61,69 +87,16 @@ class EngineV2:
             return
 
     def snapshot(self) -> SnapshotV2:
-        now = self.now()
-        profile = self._active_profile(now)
-        at_o2_stop = self._is_at_o2_stop(profile)
-        status = status_from_state(self.state, now=now, at_o2_stop=at_o2_stop)
-        timer_kind = self._timer_kind(profile)
-        summary_text = self._summary_text(profile)
-        start_label, secondary_label, start_enabled, secondary_enabled = self._button_labels(
-            status,
-            profile=profile,
-            now=now,
-        )
-        return build_snapshot(
+        # Single read path used by the GUI refresh loop.
+        return self._kernel_orchestrator.build_snapshot(
+            self,
             state=self.state,
-            now=now,
-            status=status,
-            timer_kind=timer_kind,
-            primary_text=self._primary_text(now, profile),
-            depth_text=self._depth_text(now, profile),
-            remaining_text=self._remaining_text(now, profile),
-            summary_text=summary_text,
-            summary_targets_oxygen_stop=self._summary_targets_oxygen_stop(summary_text),
-            detail_text=self._detail_text(profile),
-            start_label=start_label,
-            secondary_label=secondary_label,
-            start_enabled=start_enabled,
-            secondary_enabled=secondary_enabled,
+            now=self.now(),
         )
-
-    def _remaining_text(self, now: datetime, profile) -> str:
-        if self.state.mode is not ModeV2.DIVE:
-            return ""
-
-        dive = self.state.dive
-        if self._active_air_break() is not None:
-            left = max(300.0 - self._active_air_break_elapsed(), 0.0)
-            return f"Air Break: {format_minutes_seconds(left)} left"
-
-        if dive.phase is DivePhase.BOTTOM:
-            ls = dive.session.events.get("LS")
-            if ls is None or profile is None or profile.table_bottom_time_min is None:
-                return ""
-            elapsed = max((now - ls.timestamp).total_seconds(), 0.0)
-            left = max((profile.table_bottom_time_min * 60) - elapsed, 0.0)
-            return f"Bottom: {format_minutes_seconds(left)} left"
-
-        if dive.phase is DivePhase.ASCENT and dive._at_stop and profile is not None:
-            latest = dive.latest_arrival_event()
-            if latest is None:
-                return ""
-            stop_depths = sorted(profile.stops_fsw.keys(), reverse=True)
-            current_depth = self._stop_depth_for_number(stop_depths, latest.stop_number)
-            required_min = profile.stops_fsw.get(current_depth) if current_depth is not None else None
-            anchor = self._current_stop_anchor(profile)
-            if required_min is None or anchor is None:
-                return ""
-            remaining = (required_min * 60) - max((now - anchor).total_seconds(), 0.0)
-            if remaining >= 0:
-                return f"Stop: {format_minutes_seconds(remaining)} left"
-            return f"Stop: +{format_minutes_seconds(abs(remaining))}"
-
-        return ""
 
     def _cycle_mode(self) -> None:
+        # Mode button cycles STOPWATCH -> DIVE/AIR -> DIVE/AIR_O2 -> STOPWATCH.
+        self._invalidate_runtime_caches()
         if self.state.mode is ModeV2.STOPWATCH:
             self.state.mode = ModeV2.DIVE
             self._log("Mode -> DIVE")
@@ -139,6 +112,7 @@ class EngineV2:
         self._log("Mode -> STOPWATCH")
 
     def _reset_current_mode(self) -> None:
+        self._invalidate_runtime_caches()
         if self.state.mode is ModeV2.STOPWATCH:
             self.state.stopwatch.reset()
             self._log("Stopwatch reset")
@@ -152,6 +126,9 @@ class EngineV2:
         self._log("Dive reset")
 
     def _primary(self) -> None:
+        # Primary button is the "progress" button:
+        # leave surface, reach bottom, leave bottom, reach/leave stops, reach surface.
+        self._invalidate_runtime_caches()
         if self.state.mode is ModeV2.STOPWATCH:
             self.state.stopwatch.start_stop()
             self._log("Stopwatch start/stop")
@@ -187,6 +164,9 @@ class EngineV2:
             self._log(str(exc))
 
     def _secondary(self) -> None:
+        # Secondary button is the context button:
+        # hold/delay/oxygen confirmations/air-break toggles depending on state.
+        self._invalidate_runtime_caches()
         if self.state.mode is ModeV2.STOPWATCH:
             if self.state.stopwatch.running:
                 mark = self.state.stopwatch.lap()
@@ -225,28 +205,17 @@ class EngineV2:
         except RuntimeError as exc:
             self._log(str(exc))
 
-    def _active_profile(self, now: datetime):
-        depth = self.state.parsed_depth()
-        if depth is None:
-            return None
+    def _active_profile(self, now: datetime, *, facts: DiveFacts | None = None):
+        # Profile lookup can fail for incomplete inputs; return None gracefully.
+        if facts is None:
+            facts = self._facts_builder.build(self.state, now=now)
         try:
-            if self.state.dive.phase is DivePhase.BOTTOM:
-                ls = self.state.dive.session.events.get("LS")
-                if ls is None:
-                    return None
-                minutes = math.ceil((now - ls.timestamp).total_seconds() / 60.0)
-                return build_basic_decompression_profile(self.state.deco_mode, depth, minutes)
-            if self.state.dive.session.events.get("LB") is None:
-                return None
-            return build_basic_decompression_profile_for_session(
-                self.state.deco_mode,
-                depth,
-                self.state.dive.session,
-            )
+            return self._profile_resolver.resolve(facts)
         except Exception:
             return None
 
     def _is_at_o2_stop(self, profile) -> bool:
+        # In AIR/O2 mode, only 30 fsw and 20 fsw are oxygen-stop depths.
         if (
             self.state.mode is not ModeV2.DIVE
             or self.state.dive.phase is not DivePhase.ASCENT
@@ -263,197 +232,9 @@ class EngineV2:
         depth = self._stop_depth_for_number(stop_depths, latest.stop_number)
         return depth in {30, 20}
 
-    def _summary_text(self, profile) -> str:
-        if self.state.mode is ModeV2.STOPWATCH:
-            return ""
-        if self.state.dive.phase is DivePhase.CLEAN_TIME:
-            return "Next: Surface"
-        if profile is None:
-            return "Next: --"
-        if profile.section == "no_decompression":
-            return "Next: Surface"
-        if self.state.dive.phase is DivePhase.ASCENT:
-            if self._active_air_break() is not None:
-                left = max(300.0 - self._active_air_break_elapsed(), 0.0)
-                return f"Next: Back on O2 in {format_minutes_seconds(left)}"
-            if self._can_start_air_break(profile):
-                return "Next: 5 min Air break in 00:00"
-            if self._active_o2_display_mode(profile):
-                seconds = self._air_break_due_in_seconds()
-                if seconds is not None:
-                    return f"Next: 5 min Air break in {format_minutes_seconds(seconds)}"
-        latest = self.state.dive.latest_arrival_event()
-        return next_stop_instruction(
-            profile,
-            latest_arrival_stop_number=latest.stop_number if latest else None,
-        )
-
-    def _detail_text(self, profile) -> str:
-        if self.state.mode is not ModeV2.DIVE:
-            return ""
-        dive = self.state.dive
-        latest_hold = dive.latest_stop_event()
-        if (
-            dive.phase is DivePhase.DESCENT
-            and dive._awaiting_leave_stop
-            and latest_hold is not None
-            and latest_hold.kind == "start"
-        ):
-            depth = descent_hold_depth_for_display(
-                controller=dive,
-                start_time=latest_hold.timestamp,
-                max_depth_fsw=self.state.parsed_depth(),
-            )
-            depth_text = f" ({depth} fsw)" if depth is not None else ""
-            elapsed = (self.now() - latest_hold.timestamp).total_seconds()
-            return f"H{latest_hold.index}{depth_text}   {format_minutes_seconds(elapsed)}"
-        latest_delay = self.state.dive.latest_ascent_delay_event()
-        if latest_delay is not None and latest_delay.kind == "start":
-            elapsed = (self.now() - latest_delay.timestamp).total_seconds()
-            depth_text = f" ({latest_delay.depth_fsw} fsw)" if latest_delay.depth_fsw is not None else ""
-            return f"D{latest_delay.index}{depth_text}   {format_minutes_seconds(elapsed)}"
-        if self._active_air_break() is not None:
-            elapsed = self._active_air_break_elapsed()
-            return f"Air Break {format_tenths(elapsed)}"
-        return ""
-
-    def _timer_kind(self, profile) -> str:
-        if self.state.mode is ModeV2.STOPWATCH:
-            return "STOPWATCH"
-        dive = self.state.dive
-        if dive.phase is DivePhase.READY:
-            return "READY_ZERO"
-        if dive.phase is DivePhase.DESCENT:
-            return "DESCENT_HOLD" if dive._awaiting_leave_stop else "DESCENT_TOTAL"
-        if dive.phase is DivePhase.BOTTOM:
-            return "BOTTOM_ELAPSED" if profile is not None and profile.section != "no_decompression" else "BOTTOM_NO_DECO_REMAINING"
-        if dive.phase is DivePhase.ASCENT:
-            if dive._at_stop:
-                if self._active_air_break() is not None:
-                    return "AIR_BREAK"
-                if self._awaiting_first_o2_confirmation(profile):
-                    return "TSV"
-                return "STOP_TIMER"
-            if self._show_tsv(profile):
-                return "TSV"
-            return "ASCENT_TRAVEL"
-        if dive.phase is DivePhase.CLEAN_TIME:
-            return "CLEAN_TIME"
-        return "READY_ZERO"
-
-    @staticmethod
-    def _summary_targets_oxygen_stop(summary_text: str) -> bool:
-        return summary_text.startswith("Next: 20 fsw for ") or summary_text.startswith("Next: 30 fsw for ")
-
-    def _button_labels(self, status, *, profile, now: datetime) -> tuple[str, str, bool, bool]:
-        if self.state.mode is ModeV2.STOPWATCH:
-            return ("Start/Stop", "Lap/Reset", True, True)
-
-        dive = self.state.dive
-        if status.name == "READY":
-            return ("Leave Surface", "", True, False)
-        if status.name == "DESCENT":
-            return ("Reach Bottom", "Hold", True, True)
-        if status.name == "BOTTOM":
-            bottom_is_deco = profile is not None and profile.section != "no_decompression"
-            return ("Leave Bottom", "Delay" if bottom_is_deco else "", True, bottom_is_deco)
-        if status.name in {"AT_STOP", "AT_O2_STOP"}:
-            if self._awaiting_first_o2_confirmation(profile):
-                return ("Leave Stop", "On O2", True, True)
-            if self._active_air_break() is not None:
-                return ("Leave Stop", "On O2", True, True)
-            if self._active_o2_display_mode(profile) or self._can_start_air_break(profile):
-                return ("Leave Stop", "Off O2", True, True)
-            return ("Leave Stop", "", True, False)
-        if status.name == "SURFACE":
-            return ("", "Reset", False, True)
-
-        reaches_surface = self._start_reaches_surface(now)
-        latest_delay = dive.latest_ascent_delay_event()
-        has_active_delay = latest_delay is not None and latest_delay.kind == "start"
-        can_flag_delay = (
-            dive.phase is DivePhase.ASCENT
-            and not dive._at_stop
-            and profile is not None
-        )
-        return (
-            "Reach Surface" if reaches_surface else "Reach Stop",
-            "Stop Delay" if has_active_delay else ("Delay" if can_flag_delay else ""),
-            True,
-            can_flag_delay,
-        )
-
-    def _primary_text(self, now: datetime, profile) -> str:
-        if self.state.mode is ModeV2.STOPWATCH:
-            return stopwatch_primary_text(self.state)
-
-        dive = self.state.dive
-        if dive.phase is DivePhase.READY:
-            return "00:00.0"
-        if dive.phase is DivePhase.CLEAN_TIME:
-            status = dive.clean_time_status(now)
-            return status["CT"]
-        if dive.phase is DivePhase.DESCENT:
-            ls = dive.session.events.get("LS")
-            if ls is None:
-                return "--:--.-"
-            return format_tenths((now - ls.timestamp).total_seconds())
-        if dive.phase is DivePhase.BOTTOM:
-            ls = dive.session.events.get("LS")
-            if ls is None:
-                return "--:--.-"
-            return format_tenths((now - ls.timestamp).total_seconds())
-        if dive.phase is DivePhase.ASCENT and self._show_tsv(profile):
-            anchor = self._first_oxygen_shift_anchor(profile)
-            if anchor is None:
-                return "00:00 TSV"
-            elapsed = max((now - anchor).total_seconds(), 0.0)
-            return f"{format_minutes_seconds(elapsed)} TSV"
-        if dive.phase is DivePhase.ASCENT and dive._at_stop:
-            anchor = self._current_stop_anchor(profile)
-            if anchor is None:
-                return "--:--.-"
-            return format_tenths((now - anchor).total_seconds())
-        lb = dive.session.events.get("LB")
-        if lb is None:
-            return "--:--.-"
-        return format_tenths((now - lb.timestamp).total_seconds())
-
-    def _depth_text(self, now: datetime, profile) -> str:
-        if self.state.mode is ModeV2.STOPWATCH:
-            return ""
-        depth = self.state.parsed_depth()
-        dive = self.state.dive
-        if dive.phase is DivePhase.DESCENT:
-            estimate = estimate_current_depth(
-                controller=dive,
-                now=now,
-                max_depth_fsw=depth,
-                active_profile=profile,
-            )
-            return f"{estimate if estimate is not None else 0} fsw"
-        if depth is None:
-            return "Max -- fsw"
-        if dive.phase is DivePhase.BOTTOM:
-            return f"{depth} fsw"
-        if dive.phase is DivePhase.ASCENT and dive._at_stop and profile is not None:
-            latest = dive.latest_arrival_event()
-            if latest is not None:
-                stop_depths = sorted(profile.stops_fsw.keys(), reverse=True)
-                current_depth = self._stop_depth_for_number(stop_depths, latest.stop_number)
-                if current_depth is not None:
-                    return f"{current_depth} fsw"
-        if dive.phase is DivePhase.ASCENT:
-            estimate = estimate_current_depth(
-                controller=dive,
-                now=now,
-                max_depth_fsw=depth,
-                active_profile=profile,
-            )
-            return f"{estimate} fsw" if estimate is not None else "--"
-        return f"{depth} fsw"
-
     def _awaiting_first_o2_confirmation(self, profile) -> bool:
+        # First oxygen stop requires explicit "On O2" confirmation before
+        # oxygen-timer logic starts.
         if (
             self.state.mode is not ModeV2.DIVE
             or self.state.dive.phase is not DivePhase.ASCENT
@@ -472,6 +253,7 @@ class EngineV2:
         return self.state.first_o2_confirmed_at is None
 
     def _can_start_air_break(self, profile) -> bool:
+        # Air breaks are only allowed at 20/30 stops once 30 min on O2 has elapsed.
         if (
             profile is None
             or profile.mode is not DecompressionMode.AIR_O2
@@ -494,6 +276,8 @@ class EngineV2:
         return oxygen_elapsed is not None and oxygen_elapsed >= 30 * 60
 
     def _active_o2_display_mode(self, profile) -> bool:
+        # O2 display mode controls when summary text/countdowns should show
+        # oxygen-related guidance instead of generic next-stop guidance.
         if (
             profile is None
             or profile.mode is not DecompressionMode.AIR_O2
@@ -517,6 +301,7 @@ class EngineV2:
         return departure_depth in {20, 30} and next_depth in {20, 0}
 
     def _start_air_break(self, now: datetime, profile) -> None:
+        # Starting an air break pauses oxygen accumulation until the break ends.
         latest = self.state.dive.latest_arrival_event()
         if latest is None:
             return
@@ -536,6 +321,7 @@ class EngineV2:
         self._log(f"Air break start {now.strftime('%H:%M:%S')}")
 
     def _end_or_warn_air_break(self, now: datetime) -> None:
+        # Break must run at least 5 minutes before "Back on O2" is allowed.
         active = self._active_air_break()
         if active is None:
             return
@@ -557,6 +343,7 @@ class EngineV2:
         self._log(f"Back on O2 {now.strftime('%H:%M:%S')}")
 
     def _toggle_delay(self, now: datetime) -> None:
+        # Delay markers are used during ascent travel (between stops).
         latest = self.state.dive.latest_ascent_delay_event()
         if latest is not None and latest.kind == "start":
             ended = self.state.dive.end_ascent_delay(now)
@@ -603,6 +390,8 @@ class EngineV2:
         return max((30 * 60) - elapsed, 0.0)
 
     def _start_reaches_surface(self, now: datetime) -> bool:
+        # During ascent travel, PRIMARY means either "Reach Stop" or
+        # "Reach Surface" depending on whether another stop remains.
         profile = self._active_profile(now)
         if profile is None or profile.section == "no_decompression":
             return True
@@ -616,6 +405,9 @@ class EngineV2:
         return next_text == "Surface"
 
     def _current_stop_anchor(self, profile) -> datetime | None:
+        # Anchor = timestamp used as "time zero" for current stop timer.
+        # It changes based on whether this is the first stop, a later stop,
+        # or a first-oxygen-stop waiting for confirmation.
         if profile is None or not self.state.dive._at_stop:
             return None
         latest_arrival = self.state.dive.latest_arrival_event()
@@ -655,6 +447,7 @@ class EngineV2:
         return None
 
     def _show_tsv(self, profile) -> bool:
+        # TSV display is used before first O2 confirmation to show travel-shift vent timing.
         if (
             self.state.mode is not ModeV2.DIVE
             or self.state.dive.phase is not DivePhase.ASCENT
@@ -692,6 +485,9 @@ class EngineV2:
         self.state.first_o2_confirmed_stop_number = None
         self.state.oxygen_segment_started_at = None
         self.state.air_break_events.clear()
+
+    def _invalidate_runtime_caches(self) -> None:
+        self._kernel_orchestrator.invalidate()
 
     def _log(self, line: str) -> None:
         self.state.log_lines.append(line)

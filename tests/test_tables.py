@@ -1,7 +1,7 @@
 from datetime import datetime
 import unittest
 
-from dive_stopwatch.tables.air_decompression import (
+from dive_stopwatch.v2.tables.air_decompression import (
     DecompressionMode,
     air_o2_oxygen_stop_depths,
     available_air_decompression_depths,
@@ -20,7 +20,7 @@ from dive_stopwatch.tables.air_decompression import (
     planned_travel_time_to_first_stop_seconds,
 )
 from dive_stopwatch.v2.dive_session import DiveSession
-from dive_stopwatch.tables.no_decompression import (
+from dive_stopwatch.v2.tables.no_decompression import (
     lookup_no_decompression_limit,
     lookup_repetitive_group,
     lookup_repetitive_group_schedule,

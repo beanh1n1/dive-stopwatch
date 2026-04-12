@@ -4,9 +4,9 @@ from dataclasses import dataclass, field
 from datetime import datetime
 from enum import Enum, auto
 
-from dive_stopwatch.tables import DecompressionMode
 from .dive_controller import DiveController
 from .stopwatch_core import Stopwatch
+from .tables import DecompressionMode
 
 
 class ModeV2(Enum):

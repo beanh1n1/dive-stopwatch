@@ -8,7 +8,7 @@ from dive_stopwatch.v2.profile_helpers import (
     stop_depth_for_number,
     surface_table_summary,
 )
-from dive_stopwatch.tables import (
+from dive_stopwatch.v2.tables import (
     DecompressionMode,
     build_basic_air_o2_decompression_profile,
     build_basic_decompression_profile,

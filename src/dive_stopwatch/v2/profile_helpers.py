@@ -1,7 +1,7 @@
 from __future__ import annotations
 
 from .dive_session import format_minutes_seconds
-from dive_stopwatch.tables import lookup_repetitive_group_schedule
+from .tables import lookup_repetitive_group_schedule
 
 
 def stop_depth_for_number(stop_depths: list[int], stop_number: int) -> int | None:

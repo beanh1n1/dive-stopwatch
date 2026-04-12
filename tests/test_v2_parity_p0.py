@@ -1,7 +1,7 @@
 from datetime import datetime, timedelta
 import unittest
 
-from dive_stopwatch.tables import DecompressionMode, build_basic_air_o2_decompression_profile
+from dive_stopwatch.v2.tables import DecompressionMode, build_basic_air_o2_decompression_profile
 from dive_stopwatch.v2.core import EngineV2
 from dive_stopwatch.v2.models import IntentV2, ModeV2
 

@@ -10,7 +10,7 @@ from pathlib import Path
 
 from dive_stopwatch.v2.delay_rules import evaluate_between_stops_delay_rule, evaluate_first_stop_delay_rule
 from dive_stopwatch.v2.dive_session import DiveSession, ceil_minutes
-from dive_stopwatch.tables.no_decompression import lookup_repetitive_group
+from .no_decompression import lookup_repetitive_group
 
 __all__ = [
     "AirDecoRow",
@@ -139,7 +139,7 @@ _CSV_MODE_PATHS: dict[DecompressionMode, tuple[str, ...]] = {
 def _load_csv_rows(mode: DecompressionMode) -> dict[int, dict[int, AirDecoRow]]:
     """Load decompression rows for a specific mode from one or more CSV sources."""
 
-    docs_root = Path(__file__).resolve().parents[3] / "docs"
+    docs_root = Path(__file__).resolve().parents[4] / "docs"
     loaded: dict[int, dict[int, AirDecoRow]] = {}
     seen_keys: set[tuple[int, int]] = set()
     allowed_gas_mix = {mode.value}
