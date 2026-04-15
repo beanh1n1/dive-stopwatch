@@ -2,31 +2,30 @@ from __future__ import annotations
 
 import tkinter as tk
 
-from .core import EngineV2
-from .models import IntentV2
+from .engine import Engine, Intent
 
 
-class V2ShellApp:
+class DiveStopwatchApp:
     REFRESH_MS = 100
 
-    def __init__(self, root: tk.Tk, engine: EngineV2 | None = None) -> None:
+    def __init__(self, root: tk.Tk, engine: Engine | None = None) -> None:
         self.root = root
-        self.engine = engine or EngineV2()
+        self.engine = engine or Engine()
         self._refresh_job: str | None = None
+        self._last_log_rendered: tuple[str, ...] = ()
 
-        self.root.title("The CAISSON v2")
+        self.root.title("CAISSON Active")
         self.root.geometry("500x420")
         self.root.minsize(460, 380)
 
         self.mode_text = tk.StringVar()
-        self.deco_text = tk.StringVar()
-        self.test_time_text = tk.StringVar()
         self.status_text = tk.StringVar()
         self.primary_text = tk.StringVar()
         self.depth_text = tk.StringVar()
         self.remaining_text = tk.StringVar()
         self.summary_text = tk.StringVar()
         self.detail_text = tk.StringVar()
+        self.test_time_text = tk.StringVar()
         self.depth_input = tk.StringVar()
 
         self._build_ui()
@@ -38,9 +37,8 @@ class V2ShellApp:
         frame = tk.Frame(self.root, padx=16, pady=16)
         frame.pack(fill="both", expand=True)
 
-        tk.Label(frame, text="CAISSON v2", font=("Helvetica", 16, "bold")).pack(anchor="w")
+        tk.Label(frame, text="CAISSON Active", font=("Helvetica", 16, "bold")).pack(anchor="w")
         tk.Label(frame, textvariable=self.mode_text, font=("Helvetica", 11)).pack(anchor="w")
-        tk.Label(frame, textvariable=self.deco_text, font=("Helvetica", 11)).pack(anchor="w")
         tk.Label(frame, textvariable=self.test_time_text, font=("Helvetica", 11)).pack(anchor="w")
         tk.Label(frame, textvariable=self.status_text, font=("Helvetica", 13, "bold")).pack(anchor="w", pady=(8, 0))
         tk.Label(frame, textvariable=self.primary_text, font=("Courier", 24, "bold")).pack(anchor="w", pady=(4, 0))
@@ -52,7 +50,9 @@ class V2ShellApp:
         input_row = tk.Frame(frame)
         input_row.pack(fill="x", pady=(12, 0))
         tk.Label(input_row, text="Max Depth (fsw):").pack(side="left")
-        tk.Entry(input_row, textvariable=self.depth_input, width=8).pack(side="left", padx=(6, 8))
+        depth_entry = tk.Entry(input_row, textvariable=self.depth_input, width=8)
+        depth_entry.pack(side="left", padx=(6, 8))
+        depth_entry.bind("<Return>", self._set_depth, add="+")
         tk.Button(input_row, text="Set", command=self._set_depth).pack(side="left")
 
         test_time_row = tk.Frame(frame)
@@ -65,37 +65,39 @@ class V2ShellApp:
 
         button_row = tk.Frame(frame)
         button_row.pack(fill="x", pady=(12, 0))
-        self.primary_button = tk.Button(button_row, command=lambda: self._dispatch(IntentV2.PRIMARY))
+        self.primary_button = tk.Button(button_row, command=lambda: self._dispatch(Intent.PRIMARY))
         self.primary_button.pack(side="left", padx=(0, 8))
-        self.secondary_button = tk.Button(button_row, command=lambda: self._dispatch(IntentV2.SECONDARY))
+        self.secondary_button = tk.Button(button_row, command=lambda: self._dispatch(Intent.SECONDARY))
         self.secondary_button.pack(side="left", padx=(0, 8))
-        tk.Button(button_row, text="Mode", command=lambda: self._dispatch(IntentV2.MODE)).pack(side="left", padx=(0, 8))
-        tk.Button(button_row, text="Reset", command=lambda: self._dispatch(IntentV2.RESET)).pack(side="left")
+        tk.Button(button_row, text="Mode", command=lambda: self._dispatch(Intent.MODE)).pack(side="left", padx=(0, 8))
+        tk.Button(button_row, text="Reset", command=lambda: self._dispatch(Intent.RESET)).pack(side="left")
 
         tk.Label(frame, text="Event Log", font=("Helvetica", 11, "bold")).pack(anchor="w", pady=(12, 0))
         self.log_box = tk.Text(frame, height=10, width=60, state="disabled")
         self.log_box.pack(fill="both", expand=True)
 
-    def _set_depth(self) -> None:
+    def _sync_depth_input(self) -> None:
         self.engine.set_depth_text(self.depth_input.get())
-        self._render()
 
-    def _dispatch(self, intent: IntentV2) -> None:
-        self.engine.dispatch(intent)
-        self._render()
+    def _set_depth(self, _event=None) -> None:
+        self._run_and_render(self._sync_depth_input)
+
+    def _dispatch(self, intent: Intent) -> None:
+        self._run_and_render(self._sync_depth_input, lambda: self.engine.dispatch(intent))
 
     def _advance_test_time(self, delta_seconds: float) -> None:
-        self.engine.advance_test_time(delta_seconds)
-        self._render()
+        self._run_and_render(lambda: self.engine.advance_test_time(delta_seconds))
 
     def _reset_test_time(self) -> None:
-        self.engine.reset_test_time()
+        self._run_and_render(self.engine.reset_test_time)
+
+    def _run_and_render(self, *actions) -> None:
+        for action in actions:
+            action()
         self._render()
 
     def _start_refresh_loop(self) -> None:
-        if self._refresh_job is not None:
-            return
-        self._schedule_next_refresh()
+        if self._refresh_job is None: self._schedule_next_refresh()
 
     def _schedule_next_refresh(self) -> None:
         if not self.root.winfo_exists():
@@ -122,19 +124,27 @@ class V2ShellApp:
     def _render(self) -> None:
         snap = self.engine.snapshot()
         self.mode_text.set(f"Mode: {snap.mode_text}")
-        self.deco_text.set(f"Deco: {snap.deco_mode_text}")
         self.test_time_text.set(self.engine.test_time_label())
-        self.status_text.set(f"Status: {snap.status.value}")
-        self.primary_text.set(snap.primary)
-        self.depth_text.set(snap.depth)
-        self.remaining_text.set(snap.remaining)
-        self.summary_text.set(snap.summary)
-        self.detail_text.set(snap.detail)
-        self.primary_button.config(text=snap.start_label, state="normal" if snap.start_enabled else "disabled")
-        self.secondary_button.config(text=snap.secondary_label, state="normal" if snap.secondary_enabled else "disabled")
+        self.status_text.set(f"Status: {snap.status_text}")
+        self.primary_text.set(snap.primary_text)
+        self.depth_text.set(snap.depth_text)
+        self.remaining_text.set(snap.remaining_text)
+        self.summary_text.set(snap.summary_text)
+        self.detail_text.set(snap.detail_text)
+        self.primary_button.config(text=snap.primary_button_label, state="normal" if snap.primary_button_enabled else "disabled")
+        self.secondary_button.config(text=snap.secondary_button_label, state="normal" if snap.secondary_button_enabled else "disabled")
 
-        self.log_box.config(state="normal")
-        self.log_box.delete("1.0", "end")
-        for line in self.engine.state.log_lines[-30:]:
-            self.log_box.insert("end", f"{line}\n")
-        self.log_box.config(state="disabled")
+        log_lines = self.engine.state.ui_log[-30:]
+        if log_lines != self._last_log_rendered:
+            self.log_box.config(state="normal")
+            self.log_box.delete("1.0", "end")
+            for line in log_lines:
+                self.log_box.insert("end", f"{line}\n")
+            self.log_box.config(state="disabled")
+            self._last_log_rendered = log_lines
+
+
+def main() -> None:
+    root = tk.Tk()
+    DiveStopwatchApp(root)
+    root.mainloop()

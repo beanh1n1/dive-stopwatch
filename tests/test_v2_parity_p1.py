@@ -1,150 +1,124 @@
 from datetime import datetime, timedelta
 import unittest
 
-from dive_stopwatch.v2.core import EngineV2
-from dive_stopwatch.v2.models import IntentV2
+from dive_stopwatch.minimal import Engine, Intent
 
 
-class V2P1ParityTests(unittest.TestCase):
-    def _build_engine(self, start: datetime) -> tuple[EngineV2, dict[str, datetime]]:
+class ActiveParityP1Tests(unittest.TestCase):
+    def _build_engine(self, start: datetime) -> tuple[Engine, dict[str, datetime]]:
         current = {"now": start}
-        engine = EngineV2(now_provider=lambda: current["now"])
+        engine = Engine(now_provider=lambda: current["now"])
         engine.set_depth_text("145")
-        engine.dispatch(IntentV2.MODE)  # DIVE
-        engine.dispatch(IntentV2.MODE)  # AIR/O2
+        engine.dispatch(Intent.MODE)
+        engine.dispatch(Intent.MODE)
         return engine, current
 
     def test_status_vocabulary_uses_expected_labels(self) -> None:
         engine, current = self._build_engine(datetime(2026, 3, 30, 9, 0, 0))
-        seen: set[str] = {engine.snapshot().status.value}
+        seen = {engine.snapshot().status_text}
 
-        engine.dispatch(IntentV2.PRIMARY)  # LS -> DESCENT
-        seen.add(engine.snapshot().status.value)
+        engine.dispatch(Intent.PRIMARY)
+        seen.add(engine.snapshot().status_text)
         current["now"] += timedelta(minutes=3)
-        engine.dispatch(IntentV2.PRIMARY)  # RB -> BOTTOM
-        seen.add(engine.snapshot().status.value)
+        engine.dispatch(Intent.PRIMARY)
+        seen.add(engine.snapshot().status_text)
         current["now"] += timedelta(minutes=39)
-        engine.dispatch(IntentV2.PRIMARY)  # LB -> TRAVELING
-        seen.add(engine.snapshot().status.value)
-        current["now"] += timedelta(minutes=3, seconds=20)
-        engine.dispatch(IntentV2.PRIMARY)  # R1 -> AT STOP
-        seen.add(engine.snapshot().status.value)
+        engine.dispatch(Intent.PRIMARY)
+        seen.add(engine.snapshot().status_text)
+        current["now"] += timedelta(minutes=3)
+        engine.dispatch(Intent.PRIMARY)
+        seen.add(engine.snapshot().status_text)
         current["now"] += timedelta(minutes=2)
-        engine.dispatch(IntentV2.PRIMARY)  # L1
-        current["now"] += timedelta(seconds=20)
-        engine.dispatch(IntentV2.PRIMARY)  # R2
+        engine.dispatch(Intent.PRIMARY)
+        current["now"] += timedelta(minutes=2)
+        engine.dispatch(Intent.PRIMARY)
         current["now"] += timedelta(minutes=6)
-        engine.dispatch(IntentV2.PRIMARY)  # L2
-        current["now"] += timedelta(seconds=20)
-        engine.dispatch(IntentV2.PRIMARY)  # R3 (AT O2 STOP pending confirmation)
-        seen.add(engine.snapshot().status.value)
-        engine.dispatch(IntentV2.SECONDARY)  # On O2
+        engine.dispatch(Intent.PRIMARY)
+        current["now"] += timedelta(minutes=2)
+        engine.dispatch(Intent.PRIMARY)
+        seen.add(engine.snapshot().status_text)
+        engine.dispatch(Intent.SECONDARY)
         current["now"] += timedelta(minutes=7)
-        engine.dispatch(IntentV2.PRIMARY)  # L3
+        engine.dispatch(Intent.PRIMARY)
         current["now"] += timedelta(minutes=1)
-        engine.dispatch(IntentV2.PRIMARY)  # R4 at 20
-        current["now"] += timedelta(minutes=35)
-        engine.dispatch(IntentV2.PRIMARY)  # L4 -> traveling to surface
+        engine.dispatch(Intent.PRIMARY)
+        current["now"] += timedelta(minutes=40)
+        engine.dispatch(Intent.PRIMARY)
         current["now"] += timedelta(minutes=1)
-        engine.dispatch(IntentV2.PRIMARY)  # RS -> SURFACE
-        seen.add(engine.snapshot().status.value)
+        engine.dispatch(Intent.PRIMARY)
+        seen.add(engine.snapshot().status_text)
+        current["now"] += timedelta(minutes=11)
+        seen.add(engine.snapshot().status_text)
 
-        self.assertEqual(
-            seen,
-            {"READY", "DESCENT", "BOTTOM", "TRAVELING", "AT STOP", "AT O2 STOP", "SURFACE"},
-        )
+        self.assertEqual(seen, {"READY", "DESCENT", "BOTTOM", "TRAVELING", "AT STOP", "AT O2 STOP", "CLEAN TIME", "SURFACE"})
 
-    def test_timer_kind_parity_in_key_states(self) -> None:
+    def test_depth_and_remaining_show_at_stop(self) -> None:
         engine, current = self._build_engine(datetime(2026, 3, 30, 9, 0, 0))
-        self.assertEqual(engine.snapshot().timer_kind, "READY_ZERO")
-
-        engine.dispatch(IntentV2.PRIMARY)  # LS
-        self.assertEqual(engine.snapshot().timer_kind, "DESCENT_TOTAL")
-        engine.dispatch(IntentV2.SECONDARY)  # hold start
-        self.assertEqual(engine.snapshot().timer_kind, "DESCENT_HOLD")
-        current["now"] += timedelta(seconds=20)
-        engine.dispatch(IntentV2.SECONDARY)  # hold end
-        current["now"] += timedelta(minutes=39)
-        engine.dispatch(IntentV2.PRIMARY)  # RB
-        self.assertEqual(engine.snapshot().timer_kind, "BOTTOM_ELAPSED")
-        current["now"] += timedelta(minutes=39)
-        engine.dispatch(IntentV2.PRIMARY)  # LB
-        self.assertEqual(engine.snapshot().timer_kind, "ASCENT_TRAVEL")
-        current["now"] += timedelta(minutes=3, seconds=20)
-        engine.dispatch(IntentV2.PRIMARY)  # R1
-        self.assertEqual(engine.snapshot().timer_kind, "STOP_TIMER")
-
-    def test_line3_depth_and_modifier_show_at_stop(self) -> None:
-        engine, current = self._build_engine(datetime(2026, 3, 30, 9, 0, 0))
-        engine.dispatch(IntentV2.PRIMARY)  # LS
+        engine.dispatch(Intent.PRIMARY)
         current["now"] += timedelta(minutes=3)
-        engine.dispatch(IntentV2.PRIMARY)  # RB
+        engine.dispatch(Intent.PRIMARY)
         current["now"] += timedelta(minutes=39)
-        engine.dispatch(IntentV2.PRIMARY)  # LB
-        current["now"] += timedelta(minutes=3, seconds=20)
-        engine.dispatch(IntentV2.PRIMARY)  # R1
+        engine.dispatch(Intent.PRIMARY)
+        current["now"] += timedelta(minutes=3)
+        engine.dispatch(Intent.PRIMARY)
 
         snap = engine.snapshot()
-        self.assertEqual(snap.depth, "50 fsw")
-        self.assertIn("Stop:", snap.remaining)
-        self.assertIn("left", snap.remaining)
+        self.assertEqual(snap.depth_text, "50 fsw")
+        self.assertIn("Stop:", snap.remaining_text)
+        self.assertIn("left", snap.remaining_text)
 
-    def test_line5_event_text_parity_for_hold_and_delay(self) -> None:
+    def test_detail_line_shows_hold_and_delay(self) -> None:
         engine, current = self._build_engine(datetime(2026, 3, 30, 9, 0, 0))
-        engine.dispatch(IntentV2.PRIMARY)  # LS
-        engine.dispatch(IntentV2.SECONDARY)  # hold start
+        engine.dispatch(Intent.PRIMARY)
+        engine.dispatch(Intent.SECONDARY)
         current["now"] += timedelta(seconds=30)
-        hold_snap = engine.snapshot()
-        self.assertTrue(hold_snap.detail.startswith("H1"))
+        self.assertTrue(engine.snapshot().detail_text.startswith("H1"))
 
-        engine.dispatch(IntentV2.SECONDARY)  # hold end
+        engine.dispatch(Intent.SECONDARY)
         current["now"] += timedelta(minutes=3)
-        engine.dispatch(IntentV2.PRIMARY)  # RB
+        engine.dispatch(Intent.PRIMARY)
         current["now"] += timedelta(minutes=39)
-        engine.dispatch(IntentV2.PRIMARY)  # LB
-        engine.dispatch(IntentV2.SECONDARY)  # delay start during travel
+        engine.dispatch(Intent.PRIMARY)
+        engine.dispatch(Intent.SECONDARY)
         current["now"] += timedelta(seconds=30)
-        delay_snap = engine.snapshot()
-        self.assertTrue(delay_snap.detail.startswith("D1"))
+        self.assertTrue(engine.snapshot().detail_text.startswith("D1"))
 
-    def test_oxygen_target_styling_metadata_parity(self) -> None:
+    def test_summary_points_to_next_oxygen_stop(self) -> None:
         engine, current = self._build_engine(datetime(2026, 3, 30, 9, 0, 0))
-        engine.dispatch(IntentV2.PRIMARY)  # LS
+        engine.dispatch(Intent.PRIMARY)
         current["now"] += timedelta(minutes=3)
-        engine.dispatch(IntentV2.PRIMARY)  # RB
+        engine.dispatch(Intent.PRIMARY)
         current["now"] += timedelta(minutes=39)
-        engine.dispatch(IntentV2.PRIMARY)  # LB
-        current["now"] += timedelta(minutes=3, seconds=20)
-        engine.dispatch(IntentV2.PRIMARY)  # R1
+        engine.dispatch(Intent.PRIMARY)
+        current["now"] += timedelta(minutes=3)
+        engine.dispatch(Intent.PRIMARY)
         current["now"] += timedelta(minutes=2)
-        engine.dispatch(IntentV2.PRIMARY)  # L1
-        current["now"] += timedelta(seconds=20)
-        engine.dispatch(IntentV2.PRIMARY)  # R2 (next is 30 fsw)
+        engine.dispatch(Intent.PRIMARY)
+        current["now"] += timedelta(minutes=2)
+        engine.dispatch(Intent.PRIMARY)
 
         snap = engine.snapshot()
-        self.assertTrue(snap.summary.startswith("Next: 30 fsw for "))
-        self.assertTrue(snap.summary_targets_oxygen_stop)
+        self.assertTrue(snap.summary_text.startswith("Next: 30 fsw for "))
 
-    def test_chronological_event_logging(self) -> None:
+    def test_log_is_chronological_and_omits_mode_chatter(self) -> None:
         engine, current = self._build_engine(datetime(2026, 3, 30, 9, 0, 0))
-        engine.dispatch(IntentV2.PRIMARY)  # LS
+        engine.dispatch(Intent.PRIMARY)
         current["now"] += timedelta(minutes=3)
-        engine.dispatch(IntentV2.PRIMARY)  # RB
+        engine.dispatch(Intent.PRIMARY)
         current["now"] += timedelta(minutes=39)
-        engine.dispatch(IntentV2.PRIMARY)  # LB
-        current["now"] += timedelta(minutes=3, seconds=20)
-        engine.dispatch(IntentV2.PRIMARY)  # R1
+        engine.dispatch(Intent.PRIMARY)
+        current["now"] += timedelta(minutes=3)
+        engine.dispatch(Intent.PRIMARY)
         current["now"] += timedelta(minutes=2)
-        engine.dispatch(IntentV2.PRIMARY)  # L1
+        engine.dispatch(Intent.PRIMARY)
 
-        logs = engine.state.log_lines
-        self.assertGreaterEqual(len(logs), 5)
-        self.assertTrue(logs[0].startswith("Mode -> DIVE"))
+        logs = engine.state.ui_log
         self.assertTrue(any(line.startswith("LS ") for line in logs))
         self.assertTrue(any(line.startswith("RB ") for line in logs))
         self.assertTrue(any(line.startswith("LB ") for line in logs))
         self.assertTrue(any(line.startswith("R1 ") for line in logs))
         self.assertTrue(any(line.startswith("L1 ") for line in logs))
+        self.assertFalse(any(line.startswith("Mode ->") or line.startswith("Deco ->") for line in logs))
 
 
 if __name__ == "__main__":

@@ -10,9 +10,11 @@ requires-python = ">=3.11"
 
 [project.optional-dependencies]
 dev = ["pytest>=8.0"]
+mobile = ["flet[all]>=0.28,<0.29"]
 
 [project.scripts]
-dive-stopwatch = "dive_stopwatch.v2.main:main"
+dive-stopwatch = "dive_stopwatch.active.main:main"
+dive-stopwatch-mobile = "dive_stopwatch.mobile.main:main"
 
 [tool.setuptools]
 package-dir = {"" = "src"}
