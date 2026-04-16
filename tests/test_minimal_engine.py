@@ -200,6 +200,25 @@ class MinimalEngineTests(unittest.TestCase):
         self.assertEqual(snap.remaining_text, "Bottom: 12:40 left")
         self.assertEqual(snap.summary_text, "Next: Surface")
 
+    def test_bottom_no_decompression_countdown_keeps_default_display_kinds(self) -> None:
+        current = {"now": datetime(2026, 4, 12, 12, 0, 0)}
+        engine = Engine(now_provider=lambda: current["now"])
+        engine.set_depth_text("120")
+        engine.dispatch(Intent.MODE)  # AIR
+        engine.dispatch(Intent.PRIMARY)  # LS
+        current["now"] += timedelta(minutes=2, seconds=20)
+        engine.dispatch(Intent.PRIMARY)  # RB
+
+        snap = engine.snapshot()
+
+        self.assertEqual(engine.state.dive.phase, DivePhase.BOTTOM)
+        self.assertEqual(snap.status_text, "BOTTOM")
+        self.assertEqual(snap.status_value_kind, "default")
+        self.assertEqual(snap.depth_timer_text, "12:40 remaining")
+        self.assertEqual(snap.depth_timer_kind, "default")
+        self.assertEqual(snap.summary_text, "Next: Surface")
+        self.assertEqual(snap.summary_value_kind, "default")
+
     def test_bottom_countdown_switches_from_no_decompression_limit_to_deco_row(self) -> None:
         current = {"now": datetime(2026, 4, 12, 12, 0, 0)}
         engine = Engine(now_provider=lambda: current["now"])
@@ -797,6 +816,38 @@ class MinimalEngineTests(unittest.TestCase):
         self.assertEqual(after_attempt.secondary_button_label, "On O2")
         self.assertTrue(engine.state.ui_log[-1].startswith("Complete break first (03:00)"))
 
+    def test_air_break_state_uses_air_break_timer_kind_and_o2_summary_kind(self) -> None:
+        current = {"now": datetime(2026, 4, 12, 12, 0, 0)}
+        engine = Engine(now_provider=lambda: current["now"])
+        engine.set_depth_text("145")
+        engine.dispatch(Intent.MODE)
+        engine.dispatch(Intent.MODE)
+        engine.dispatch(Intent.PRIMARY)  # LS
+        current["now"] += timedelta(minutes=3)
+        engine.dispatch(Intent.PRIMARY)  # RB
+        current["now"] += timedelta(minutes=39)
+        engine.dispatch(Intent.PRIMARY)  # LB
+        current["now"] += timedelta(minutes=3)
+        engine.dispatch(Intent.PRIMARY)  # R1 50
+        engine.dispatch(Intent.PRIMARY)  # L1
+        current["now"] += timedelta(minutes=2)
+        engine.dispatch(Intent.PRIMARY)  # R2 40
+        engine.dispatch(Intent.PRIMARY)  # L2
+        current["now"] += timedelta(minutes=6)
+        engine.dispatch(Intent.PRIMARY)  # R3 30
+        engine.dispatch(Intent.SECONDARY)  # On O2
+        current["now"] += timedelta(minutes=30)
+        engine.dispatch(Intent.SECONDARY)  # start air break
+        current["now"] += timedelta(minutes=2)
+
+        snap = engine.snapshot()
+
+        self.assertEqual(snap.status_value_text, "Air Break")
+        self.assertEqual(snap.status_value_kind, "air_break")
+        self.assertEqual(snap.primary_value_kind, "air_break")
+        self.assertEqual(snap.depth_timer_kind, "o2")
+        self.assertEqual(snap.summary_value_kind, "o2")
+
     def test_o2_stop_shows_time_until_air_break_due(self) -> None:
         current = {"now": datetime(2026, 4, 13, 10, 22, 2)}
         engine = Engine(now_provider=lambda: current["now"])
@@ -831,6 +882,34 @@ class MinimalEngineTests(unittest.TestCase):
         self.assertEqual(snap.status_text, "AT O2 STOP")
         self.assertEqual(snap.depth_text, "20 fsw")
         self.assertEqual(snap.summary_text, "Next: Air break in 14:38")
+
+    def test_delay_detail_text_is_visible_only_while_delay_is_active(self) -> None:
+        current = {"now": datetime(2026, 4, 12, 12, 0, 0)}
+        engine = Engine(now_provider=lambda: current["now"])
+        engine.set_depth_text("190")
+        engine.dispatch(Intent.MODE)
+        engine.dispatch(Intent.PRIMARY)  # LS
+        current["now"] += timedelta(minutes=3)
+        engine.dispatch(Intent.PRIMARY)  # RB
+        current["now"] += timedelta(minutes=37)
+        engine.dispatch(Intent.PRIMARY)  # LB
+        current["now"] += timedelta(minutes=4)
+        engine.dispatch(Intent.PRIMARY)  # R1
+        engine.dispatch(Intent.PRIMARY)  # L1
+        current["now"] += timedelta(seconds=2)
+        engine.dispatch(Intent.SECONDARY)  # delay start
+
+        active_delay = engine.snapshot()
+        self.assertTrue(active_delay.detail_text.startswith("D1 ("))
+        self.assertTrue(active_delay.summary_text.startswith("Next:"))
+        self.assertTrue(engine.state.dive.active_delay is not None)
+
+        current["now"] += timedelta(minutes=4)
+        engine.dispatch(Intent.SECONDARY)  # delay end + recompute
+        finished_delay = engine.snapshot()
+        self.assertEqual(finished_delay.detail_text, "")
+        self.assertTrue(finished_delay.summary_text.startswith("Next:"))
+        self.assertIsNotNone(engine.state.dive.last_delay_recompute)
 
     def test_final_twenty_stop_with_thirty_five_minutes_or_less_remaining_requires_no_air_break(self) -> None:
         current = {"now": datetime(2026, 4, 12, 12, 0, 0)}
