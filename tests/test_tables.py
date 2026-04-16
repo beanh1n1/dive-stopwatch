@@ -29,6 +29,10 @@ def _rows(name: str) -> list[dict[str, str]]:
         return list(csv.DictReader(handle))
 
 
+def _depths(name: str) -> set[int]:
+    return {int(row["depth_fsw"]) for row in _rows(name)}
+
+
 def _row(name: str, depth_fsw: int, bottom_time_min: int) -> dict[str, str]:
     for row in _rows(name):
         if int(row["depth_fsw"]) == depth_fsw and int(row["bottom_time_min"]) == bottom_time_min:
@@ -125,6 +129,11 @@ class CsvSourceOfTruthTests(unittest.TestCase):
 
 
 class MinimalTableRegressionTests(unittest.TestCase):
+    def test_air_and_air_o2_depth_ladders_match_after_75_fsw_correction(self) -> None:
+        air_depths = _depths("AIR.csv")
+        air_o2_depths = _depths("AIR_O2.csv")
+        self.assertEqual(air_depths, air_o2_depths)
+
     def test_every_csv_row_round_trips_through_build_profile(self) -> None:
         for name, mode in (("AIR.csv", DecoMode.AIR), ("AIR_O2.csv", DecoMode.AIR_O2)):
             for raw_row in _rows(name):
@@ -170,6 +179,16 @@ class MinimalTableRegressionTests(unittest.TestCase):
             for depth_fsw, limits in sorted(depths.items()):
                 with self.subTest(mode=mode.value, depth_fsw=depth_fsw):
                     self.assertEqual(no_decompression_limit(mode, depth_fsw), max(limits))
+
+    def test_requests_in_the_71_to_75_band_round_to_80_after_75_fsw_correction(self) -> None:
+        for requested_depth in range(71, 76):
+            with self.subTest(requested_depth=requested_depth):
+                air_profile = build_profile(DecoMode.AIR, requested_depth, 50)
+                air_o2_profile = build_profile(DecoMode.AIR_O2, requested_depth, 50)
+                self.assertEqual(air_profile.table_depth_fsw, 80)
+                self.assertEqual(air_o2_profile.table_depth_fsw, 80)
+                self.assertEqual(air_profile.table_bottom_time_min, 50)
+                self.assertEqual(air_o2_profile.table_bottom_time_min, 50)
 
     def test_air_no_decompression_profile_uses_merged_csv_row(self) -> None:
         profile = build_profile(DecoMode.AIR, 31, 23)
