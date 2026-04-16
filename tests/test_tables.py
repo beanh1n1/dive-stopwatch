@@ -1,4 +1,5 @@
 import csv
+import re
 from pathlib import Path
 import unittest
 
@@ -6,6 +7,7 @@ from dive_stopwatch.minimal.profiles import DecoMode, apply_between_stop_delay, 
 
 
 DOCS = Path(__file__).resolve().parents[1] / "docs"
+AUDIT = DOCS / "CSV_BOUNDARY_AUDIT.md"
 STOP_COLUMNS = [
     "stop_130",
     "stop_120",
@@ -34,6 +36,34 @@ def _row(name: str, depth_fsw: int, bottom_time_min: int) -> dict[str, str]:
     raise KeyError((name, depth_fsw, bottom_time_min))
 
 
+_AUDIT_GAP_ROW_RE = re.compile(r"^\|\s*(\d+)\s*\|\s*(\d+)\s*\|\s*(\d+)\s*\|\s*(\d+)\s*\|\s*Gap\s*\|$")
+
+
+def _audit_gap_rows() -> dict[str, list[tuple[int, int, int]]]:
+    rows: dict[str, list[tuple[int, int, int]]] = {}
+    current_name: str | None = None
+
+    for line in AUDIT.read_text().splitlines():
+        stripped = line.strip()
+        if stripped == "## AIR.csv":
+            current_name = "AIR.csv"
+            continue
+        if stripped == "## AIR_O2.csv":
+            current_name = "AIR_O2.csv"
+            continue
+        if current_name is None:
+            continue
+
+        match = _AUDIT_GAP_ROW_RE.match(stripped)
+        if not match:
+            continue
+
+        depth_fsw, max_no_d, first_deco, _gap = map(int, match.groups())
+        rows.setdefault(current_name, []).append((depth_fsw, max_no_d, first_deco))
+
+    return rows
+
+
 class CsvSourceOfTruthTests(unittest.TestCase):
     def test_no_decompression_rows_have_blank_deco_fields(self) -> None:
         for name in ("AIR.csv", "AIR_O2.csv"):
@@ -59,6 +89,21 @@ class CsvSourceOfTruthTests(unittest.TestCase):
         self.assertEqual(row["repeat_group"], "L")
         self.assertEqual(row["section"], "no_decompression")
         self.assertEqual(row["time_to_first_stop"].strip(), "")
+
+    def test_all_gap_boundaries_round_to_first_deco_row(self) -> None:
+        audit_rows = _audit_gap_rows()
+        for name, mode in (("AIR.csv", DecoMode.AIR), ("AIR_O2.csv", DecoMode.AIR_O2)):
+            for depth_fsw, max_no_d, first_deco in audit_rows[name]:
+                with self.subTest(mode=mode.value, depth_fsw=depth_fsw, bottom_time_min=max_no_d):
+                    no_deco_profile = build_profile(mode, depth_fsw, max_no_d)
+                    self.assertTrue(no_deco_profile.is_no_decompression)
+                    self.assertEqual(no_deco_profile.table_depth_fsw, depth_fsw)
+                    self.assertEqual(no_deco_profile.table_bottom_time_min, max_no_d)
+
+                with self.subTest(mode=mode.value, depth_fsw=depth_fsw, bottom_time_min=max_no_d + 1):
+                    first_deco_profile = build_profile(mode, depth_fsw, max_no_d + 1)
+                    self.assertEqual(first_deco_profile.table_depth_fsw, depth_fsw)
+                    self.assertEqual(first_deco_profile.table_bottom_time_min, first_deco)
 
 
 class MinimalTableRegressionTests(unittest.TestCase):
@@ -119,6 +164,21 @@ class MinimalTableRegressionTests(unittest.TestCase):
         self.assertEqual(gases[40], "air")
         self.assertEqual(gases[30], "o2")
         self.assertEqual(gases[20], "o2")
+
+    def test_air_o2_gas_assignment_constraints_hold_across_decompression_rows(self) -> None:
+        cases = (
+            (30, 380),
+            (40, 170),
+            (90, 120),
+            (145, 39),
+        )
+        for depth_fsw, bottom_time_min in cases:
+            with self.subTest(depth_fsw=depth_fsw, bottom_time_min=bottom_time_min):
+                profile = build_profile(DecoMode.AIR_O2, depth_fsw, bottom_time_min)
+                o2_depths = [stop.depth_fsw for stop in profile.stops if stop.gas == "o2"]
+                self.assertTrue(o2_depths)
+                self.assertEqual(o2_depths, [depth for depth in (30, 20) if depth in o2_depths])
+                self.assertTrue(all(stop.depth_fsw <= 30 for stop in profile.stops if stop.gas == "o2"))
 
     def test_first_stop_delay_shallow_adds_time_to_first_stop(self) -> None:
         profile = build_profile(DecoMode.AIR, 113, 60)

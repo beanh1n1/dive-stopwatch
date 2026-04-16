@@ -321,9 +321,9 @@ def _dive_view(state: EngineState, now: datetime) -> DiveView:
     active_break = state.dive.oxygen.active_air_break
     next_stop = next_stop_after(profile, state.dive.current_stop_index) if profile is not None else None
     arrival = find_latest_event(state.dive.events, f"R{state.dive.current_stop_index}") if at_stop else None
-    prior_o2_departure = (
+    prior_departure = (
         find_latest_event(state.dive.events, f"L{state.dive.current_stop_index - 1}")
-        if at_o2_stop and previous_stop is not None and previous_stop.gas == "o2" and state.dive.current_stop_index not in {None, 1}
+        if at_stop and state.dive.current_stop_index not in {None, 1}
         else None
     )
     if arrival is None:
@@ -332,8 +332,8 @@ def _dive_view(state: EngineState, now: datetime) -> DiveView:
         stop_anchor = None
     elif first_o2_stop and state.dive.oxygen.first_confirmed_at is not None:
         stop_anchor = state.dive.oxygen.first_confirmed_at
-    elif prior_o2_departure is not None and state.dive.oxygen.segment_started_at is not None and active_break is None:
-        stop_anchor = prior_o2_departure.timestamp
+    elif prior_departure is not None:
+        stop_anchor = prior_departure.timestamp
     else:
         stop_anchor = arrival.timestamp
     stop_remaining = None if current_stop is None or stop_anchor is None else (current_stop.duration_min * 60) - max((now - stop_anchor).total_seconds(), 0.0)

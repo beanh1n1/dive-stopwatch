@@ -61,6 +61,21 @@ class MinimalTablesTests(unittest.TestCase):
         self.assertTrue(result.schedule_changed)
         self.assertEqual([(stop.depth_fsw, stop.duration_min) for stop in result.profile.stops], [(30, 23), (20, 116)])
 
+    def test_first_stop_delay_exactly_60s_is_ignored_at_depth_gt_50(self) -> None:
+        profile = build_profile(DecoMode.AIR, 121, 55)
+        planned_time_to_first_stop_sec = profile.time_to_first_stop_sec
+        self.assertIsNotNone(planned_time_to_first_stop_sec)
+
+        result = apply_first_stop_delay(
+            profile=profile,
+            actual_time_to_first_stop_sec=planned_time_to_first_stop_sec + 60,
+            delay_depth_fsw=60,
+        )
+
+        self.assertEqual(result.outcome, "ignore_delay")
+        self.assertEqual(result.delay_min, 0)
+        self.assertFalse(result.schedule_changed)
+
     def test_first_stop_delay_recomputes_for_deeper_delay(self) -> None:
         profile = build_profile(DecoMode.AIR, 121, 55)
 
@@ -77,6 +92,20 @@ class MinimalTablesTests(unittest.TestCase):
         self.assertEqual(result.profile.table_bottom_time_min, 60)
         self.assertEqual([(stop.depth_fsw, stop.duration_min) for stop in result.profile.stops], [(40, 12), (30, 28), (20, 170)])
 
+    def test_first_stop_delay_at_exactly_50_fsw_takes_shallow_branch(self) -> None:
+        profile = build_profile(DecoMode.AIR, 113, 55)
+
+        result = apply_first_stop_delay(
+            profile=profile,
+            actual_time_to_first_stop_sec=380,
+            delay_depth_fsw=50,
+        )
+
+        self.assertEqual(result.outcome, "add_to_first_stop")
+        self.assertEqual(result.delay_min, 4)
+        self.assertTrue(result.schedule_changed)
+        self.assertEqual([(stop.depth_fsw, stop.duration_min) for stop in result.profile.stops], [(30, 23), (20, 116)])
+
     def test_between_stop_delay_ignores_shallow_delay(self) -> None:
         profile = build_profile(DecoMode.AIR, 113, 55)
 
@@ -85,6 +114,34 @@ class MinimalTablesTests(unittest.TestCase):
             actual_elapsed_sec=260,
             planned_elapsed_sec=20,
             delay_depth_fsw=40,
+        )
+
+        self.assertEqual(result.outcome, "ignore_delay")
+        self.assertEqual(result.delay_min, 0)
+        self.assertFalse(result.schedule_changed)
+
+    def test_between_stop_delay_exactly_60s_is_ignored_at_depth_gt_50(self) -> None:
+        profile = build_profile(DecoMode.AIR, 113, 55)
+
+        result = apply_between_stop_delay(
+            profile=profile,
+            actual_elapsed_sec=80,
+            planned_elapsed_sec=20,
+            delay_depth_fsw=60,
+        )
+
+        self.assertEqual(result.outcome, "ignore_delay")
+        self.assertEqual(result.delay_min, 0)
+        self.assertFalse(result.schedule_changed)
+
+    def test_between_stop_delay_at_exactly_50_fsw_is_ignored_not_recomputed(self) -> None:
+        profile = build_profile(DecoMode.AIR, 113, 55)
+
+        result = apply_between_stop_delay(
+            profile=profile,
+            actual_elapsed_sec=260,
+            planned_elapsed_sec=20,
+            delay_depth_fsw=50,
         )
 
         self.assertEqual(result.outcome, "ignore_delay")
