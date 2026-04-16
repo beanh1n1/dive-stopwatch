@@ -335,6 +335,37 @@ class MinimalEngineTests(unittest.TestCase):
         self.assertEqual(snap.primary_text, "TSV 00:20.0")
         self.assertEqual(snap.remaining_text, "")
 
+    def test_first_o2_stop_from_bottom_keeps_traveling_until_r1_then_uses_tsv(self) -> None:
+        current = {"now": datetime(2026, 4, 12, 12, 0, 0)}
+        engine = Engine(now_provider=lambda: current["now"])
+        engine.set_depth_text("120")
+        engine.dispatch(Intent.MODE)
+        engine.dispatch(Intent.MODE)
+        engine.dispatch(Intent.PRIMARY)  # LS
+        current["now"] += timedelta(minutes=3)
+        engine.dispatch(Intent.PRIMARY)  # RB
+        current["now"] += timedelta(minutes=57)
+        engine.dispatch(Intent.PRIMARY)  # LB
+        current["now"] += timedelta(seconds=20)
+
+        traveling = engine.snapshot()
+        self.assertEqual(traveling.status_text, "TRAVELING")
+        self.assertEqual(traveling.status_value_text, "Traveling")
+
+        engine.dispatch(Intent.PRIMARY)  # R1 30
+        current["now"] += timedelta(seconds=20)
+
+        at_stop = engine.snapshot()
+        self.assertEqual(at_stop.status_text, "AT O2 STOP")
+        self.assertEqual(at_stop.primary_text, "TSV 00:20.0")
+        self.assertEqual(at_stop.secondary_button_label, "On O2")
+
+        engine.dispatch(Intent.SECONDARY)
+        on_o2 = engine.snapshot()
+        self.assertEqual(on_o2.status_text, "AT O2 STOP")
+        self.assertEqual(on_o2.status_value_text, "On O2")
+        self.assertIsNotNone(engine.state.dive.oxygen.first_confirmed_at)
+
     def test_travel_to_first_o2_stop_keeps_traveling_status(self) -> None:
         current = {"now": datetime(2026, 4, 12, 12, 0, 0)}
         engine = Engine(now_provider=lambda: current["now"])
@@ -523,6 +554,66 @@ class MinimalEngineTests(unittest.TestCase):
         self.assertEqual(engine.state.dive.last_delay_recompute.before_profile, original)
         self.assertEqual(engine.state.dive.last_delay_recompute.after_profile, updated)
         self.assertTrue(engine.state.ui_log[-1].startswith("Schedule updated (+"))
+
+    def test_exact_sixty_second_first_stop_delay_is_ignored_without_schedule_update_log(self) -> None:
+        current = {"now": datetime(2026, 4, 12, 12, 0, 0)}
+        engine = Engine(now_provider=lambda: current["now"])
+        engine.set_depth_text("121")
+        engine.dispatch(Intent.MODE)  # AIR
+        engine.dispatch(Intent.PRIMARY)  # LS
+        current["now"] += timedelta(minutes=3)
+        engine.dispatch(Intent.PRIMARY)  # RB
+        current["now"] += timedelta(minutes=52)
+        engine.dispatch(Intent.PRIMARY)  # LB
+
+        original = engine.state.dive.profile
+        self.assertIsNotNone(original)
+
+        current["now"] += timedelta(seconds=100)
+        engine.dispatch(Intent.SECONDARY)  # delay start above 50 fsw
+        self.assertGreater(engine.state.dive.active_delay.depth_fsw, 50)
+
+        current["now"] += timedelta(seconds=60)
+        engine.dispatch(Intent.SECONDARY)  # exact 60s delay end
+
+        updated = engine.state.dive.profile
+        self.assertIsNone(engine.state.dive.active_delay)
+        self.assertEqual(updated, original)
+        self.assertIsNotNone(engine.state.dive.last_delay_recompute)
+        self.assertEqual(engine.state.dive.last_delay_recompute.outcome, "ignore_delay")
+        self.assertFalse(engine.state.dive.last_delay_recompute.schedule_changed)
+        self.assertFalse(any(line.startswith("Schedule updated (+") for line in engine.state.ui_log))
+
+    def test_shallow_first_stop_delay_extends_first_stop_without_table_recompute(self) -> None:
+        current = {"now": datetime(2026, 4, 12, 12, 0, 0)}
+        engine = Engine(now_provider=lambda: current["now"])
+        engine.set_depth_text("113")
+        engine.dispatch(Intent.MODE)  # AIR
+        engine.dispatch(Intent.PRIMARY)  # LS
+        current["now"] += timedelta(minutes=3)
+        engine.dispatch(Intent.PRIMARY)  # RB
+        current["now"] += timedelta(minutes=52)
+        engine.dispatch(Intent.PRIMARY)  # LB
+
+        original = engine.state.dive.profile
+        self.assertIsNotNone(original)
+        self.assertEqual([(stop.depth_fsw, stop.duration_min) for stop in original.stops], [(30, 19), (20, 116)])
+
+        current["now"] += timedelta(seconds=140)
+        engine.dispatch(Intent.SECONDARY)  # delay start at <= 50 fsw
+        self.assertLessEqual(engine.state.dive.active_delay.depth_fsw, 50)
+
+        current["now"] += timedelta(minutes=4)
+        engine.dispatch(Intent.SECONDARY)  # delay end
+
+        updated = engine.state.dive.profile
+        self.assertIsNone(engine.state.dive.active_delay)
+        self.assertEqual(updated.table_depth_fsw, original.table_depth_fsw)
+        self.assertEqual(updated.table_bottom_time_min, original.table_bottom_time_min)
+        self.assertEqual([(stop.depth_fsw, stop.duration_min) for stop in updated.stops], [(30, 23), (20, 116)])
+        self.assertIsNotNone(engine.state.dive.last_delay_recompute)
+        self.assertEqual(engine.state.dive.last_delay_recompute.outcome, "add_to_first_stop")
+        self.assertEqual(engine.state.dive.last_delay_recompute.after_profile, updated)
 
     def test_between_stop_delay_restarts_remaining_schedule_when_recomputed(self) -> None:
         current = {"now": datetime(2026, 4, 12, 12, 0, 0)}
@@ -769,6 +860,14 @@ class MinimalEngineTests(unittest.TestCase):
         self.assertEqual(during_break.primary_text, "05:00.0")
         self.assertEqual(during_break.remaining_text, "Air Break: 00:00 left")
         self.assertEqual(during_break.summary_text, "Next: O2 for 87:40")
+
+        engine.dispatch(Intent.SECONDARY)
+        after_break = engine.snapshot()
+        self.assertEqual(after_break.status_value_text, "On O2")
+        self.assertTrue(after_break.remaining_text.startswith("Stop: "))
+        self.assertFalse(after_break.remaining_text.startswith("Air Break"))
+        self.assertEqual(after_break.secondary_button_label, "")
+        self.assertFalse(after_break.secondary_button_enabled)
 
     def test_o2_stop_prefers_next_stop_over_future_air_break_when_next_stop_exists(self) -> None:
         current = {"now": datetime(2026, 4, 12, 12, 0, 0)}
