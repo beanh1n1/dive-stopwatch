@@ -81,6 +81,7 @@ class DiveState:
     profile: DiveProfile | None = None
     profile_signature: tuple | None = None
     current_stop_index: int | None = None
+    travel_delay_sec: float = 0.0
     active_delay: DelayState | None = None
     last_delay_recompute: DelayRecomputeState | None = None
     oxygen: OxygenState = field(default_factory=OxygenState)
@@ -297,7 +298,7 @@ def estimate_current_depth(state: EngineState, now: datetime) -> int | None:
     anchor = anchor_event.timestamp if anchor_event is not None else None
     if anchor is None:
         return None
-    elapsed_sec = max((now - anchor).total_seconds(), 0.0)
+    elapsed_sec = _travel_progress_seconds(state, now, anchor)
     previous_stop = stop_by_index(profile, state.dive.current_stop_index) if state.dive.current_stop_index is not None else None
     start_depth = previous_stop.depth_fsw if previous_stop is not None else depth
     target = next_stop_after(profile, state.dive.current_stop_index)
@@ -448,6 +449,14 @@ def _travel_anchor_event(state: EngineState) -> Event | None:
     return find_latest_event(state.dive.events, f"L{state.dive.current_stop_index}")
 
 
+def _travel_progress_seconds(state: EngineState, now: datetime, anchor: datetime) -> float:
+    elapsed_sec = max((now - anchor).total_seconds(), 0.0)
+    paused_sec = state.dive.travel_delay_sec
+    if state.dive.phase is DivePhase.TRAVEL and state.dive.active_delay is not None:
+        paused_sec += max((now - state.dive.active_delay.started_at).total_seconds(), 0.0)
+    return max(elapsed_sec - paused_sec, 0.0)
+
+
 def _profile_signature(
     state: EngineState,
     now: datetime,
@@ -495,6 +504,10 @@ def _record_event(
     if code:
         updated = replace(state, dive=replace(state.dive, events=state.dive.events + (Event(code=code, timestamp=now),)))
     dive = updated.dive if phase is None else replace(updated.dive, phase=phase)
+    if phase is DivePhase.TRAVEL:
+        dive = replace(dive, travel_delay_sec=0.0)
+    elif phase is not None and phase is not DivePhase.TRAVEL:
+        dive = replace(dive, travel_delay_sec=0.0)
     if current_stop_index is not None:
         dive = replace(dive, current_stop_index=current_stop_index)
     if oxygen is not None:
@@ -507,6 +520,7 @@ def _record_event(
             current_stop_index=None,
             oxygen=OxygenState(),
             active_delay=None,
+            travel_delay_sec=0.0,
         )
     logged = f"{(label or code)} {now.strftime('%H:%M:%S')}".strip()
     return replace(replace(updated, dive=dive), ui_log=updated.ui_log + ((logged,) if logged else ()))
@@ -529,7 +543,15 @@ def _toggle_delay(state: EngineState, now: datetime) -> EngineState:
         code=f"D{index}_END",
         label=f"Delay {index} end",
     )
-    cleared = replace(updated, dive=replace(updated.dive, active_delay=None))
+    delay_elapsed_sec = max((now - state.dive.active_delay.started_at).total_seconds(), 0.0)
+    cleared = replace(
+        updated,
+        dive=replace(
+            updated.dive,
+            active_delay=None,
+            travel_delay_sec=updated.dive.travel_delay_sec + delay_elapsed_sec if updated.dive.phase is DivePhase.TRAVEL else updated.dive.travel_delay_sec,
+        ),
+    )
     result = _apply_delay_result(cleared, now, state.dive.active_delay)
     return result
 

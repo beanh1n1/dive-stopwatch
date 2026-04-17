@@ -128,7 +128,7 @@ class MinimalEngineTests(unittest.TestCase):
         self.assertEqual(snap.status_text, "CLEAN TIME")
         self.assertEqual(snap.primary_text, "10:00")
         self.assertEqual(snap.depth_text, "60 / 12 B")
-        self.assertEqual(snap.summary_text, "Monitor diver for signs and symptoms of AGE")
+        self.assertEqual(snap.summary_text, "")
         self.assertFalse(snap.primary_button_enabled)
         self.assertFalse(snap.secondary_button_enabled)
 
@@ -153,7 +153,7 @@ class MinimalEngineTests(unittest.TestCase):
         self.assertEqual(clean_time.status_text, "CLEAN TIME")
         self.assertEqual(clean_time.primary_text, "10:00")
         self.assertEqual(clean_time.depth_text, "80 / 50 M")
-        self.assertEqual(clean_time.summary_text, "Monitor diver for signs and symptoms of AGE")
+        self.assertEqual(clean_time.summary_text, "")
 
         current["now"] += timedelta(minutes=9, seconds=59)
         countdown = engine.snapshot()
@@ -218,6 +218,24 @@ class MinimalEngineTests(unittest.TestCase):
         self.assertEqual(snap.depth_timer_kind, "default")
         self.assertEqual(snap.summary_text, "Next: Surface")
         self.assertEqual(snap.summary_value_kind, "default")
+
+    def test_twenty_fsw_or_shallower_shows_no_bottom_time_limit(self) -> None:
+        current = {"now": datetime(2026, 4, 12, 12, 0, 0)}
+        engine = Engine(now_provider=lambda: current["now"])
+        engine.set_depth_text("20")
+        engine.dispatch(Intent.MODE)  # AIR
+        engine.dispatch(Intent.PRIMARY)  # LS
+        current["now"] += timedelta(minutes=2)
+        engine.dispatch(Intent.PRIMARY)  # RB
+        current["now"] += timedelta(minutes=30)
+
+        snap = engine.snapshot()
+
+        self.assertEqual(engine.state.dive.phase, DivePhase.BOTTOM)
+        self.assertEqual(snap.depth_text, "20 fsw")
+        self.assertEqual(snap.remaining_text, "")
+        self.assertEqual(snap.depth_timer_text, "")
+        self.assertEqual(snap.summary_text, "Next: Surface")
 
     def test_bottom_countdown_switches_from_no_decompression_limit_to_deco_row(self) -> None:
         current = {"now": datetime(2026, 4, 12, 12, 0, 0)}
@@ -300,9 +318,10 @@ class MinimalEngineTests(unittest.TestCase):
         snap = engine.snapshot()
 
         self.assertEqual(engine.state.dive.phase, DivePhase.BOTTOM)
-        self.assertEqual(snap.depth_text, "Max -- fsw")
+        self.assertEqual(snap.depth_text, "__ fsw")
         self.assertEqual(snap.remaining_text, "")
-        self.assertEqual(snap.summary_text, "Input max depth for table/schedule")
+        self.assertEqual(snap.depth_timer_text, "")
+        self.assertEqual(snap.summary_text, "Next: Input Max Depth for table/schedule")
 
     def test_first_o2_confirmation_uses_secondary_at_first_o2_stop(self) -> None:
         current = {"now": datetime(2026, 4, 12, 12, 0, 0)}
@@ -717,6 +736,35 @@ class MinimalEngineTests(unittest.TestCase):
         self.assertIsNotNone(engine.state.dive.last_delay_recompute)
         self.assertEqual(engine.state.dive.last_delay_recompute.before_profile, original)
         self.assertEqual(engine.state.dive.last_delay_recompute.after_profile, updated)
+
+    def test_first_stop_delay_freezes_travel_depth_and_remaining_during_fast_forward(self) -> None:
+        current = {"now": datetime(2026, 4, 12, 19, 54, 41)}
+        engine = Engine(now_provider=lambda: current["now"])
+        engine.set_depth_text("120")
+        engine.dispatch(Intent.MODE)  # AIR
+        engine.dispatch(Intent.PRIMARY)  # LS
+        current["now"] = datetime(2026, 4, 12, 19, 56, 49)
+        engine.dispatch(Intent.PRIMARY)  # RB
+        current["now"] = datetime(2026, 4, 12, 20, 13, 0)
+        engine.dispatch(Intent.PRIMARY)  # LB
+
+        current["now"] = datetime(2026, 4, 12, 20, 13, 2)
+        engine.dispatch(Intent.SECONDARY)  # delay start
+        active_delay = engine.snapshot()
+        self.assertEqual(active_delay.depth_text, "119 fsw")
+
+        current["now"] = datetime(2026, 4, 12, 20, 15, 15)
+        delayed = engine.snapshot()
+        self.assertEqual(delayed.depth_text, "119 fsw")
+
+        engine.dispatch(Intent.SECONDARY)  # delay end + recompute
+        resumed = engine.snapshot()
+        self.assertEqual(resumed.depth_text, "119 fsw")
+        self.assertTrue(engine.state.ui_log[-1].startswith("Schedule updated (+3m)"))
+
+        current["now"] += timedelta(seconds=10)
+        after_resume = engine.snapshot()
+        self.assertEqual(after_resume.depth_text, "114 fsw")
 
     def test_between_stop_exact_sixty_second_delay_is_ignored_without_schedule_update(self) -> None:
         current = {"now": datetime(2026, 4, 12, 12, 0, 0)}

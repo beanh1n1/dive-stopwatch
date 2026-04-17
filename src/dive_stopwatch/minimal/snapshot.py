@@ -95,7 +95,7 @@ def create_snapshot(state: EngineState, now: datetime) -> Snapshot:
         if phase is eng.DivePhase.SURFACE:
             depth_text = _final_table_schedule(view.profile) or ("Max -- fsw" if view.depth is None else f"{view.depth} fsw")
         elif phase is eng.DivePhase.BOTTOM:
-            depth_text = "Max -- fsw" if view.depth is None else f"{view.depth} fsw"
+            depth_text = "__ fsw" if view.depth is None else f"{view.depth} fsw"
         elif view.at_stop:
             depth_text = f"{view.current_stop.depth_fsw} fsw" if view.current_stop is not None else "--"
         elif phase in {eng.DivePhase.DESCENT, eng.DivePhase.TRAVEL}:
@@ -109,17 +109,24 @@ def create_snapshot(state: EngineState, now: datetime) -> Snapshot:
         bottom_depth_timer_text = ""
         if view.air_break_remaining is not None:
             remaining_text = f"Air Break: {eng.format_mmss(view.air_break_remaining)} left"
+        elif phase is eng.DivePhase.BOTTOM and view.depth is None:
+            remaining_text = ""
+            bottom_depth_timer_text = ""
         elif phase is eng.DivePhase.BOTTOM and view.profile is not None:
             if view.ls is None:
                 remaining_text = ""
             elif view.profile.is_no_decompression:
-                limit_min = no_decompression_limit(state.deco_mode, view.depth) if state.deco_mode is not None and view.depth is not None else None
-                if limit_min is None:
+                if view.depth is not None and view.depth <= 20:
                     remaining_text = ""
+                    bottom_depth_timer_text = ""
                 else:
-                    remaining = (limit_min * 60) - (now - view.ls.timestamp).total_seconds()
-                    remaining_text = f"Bottom: {eng.format_mmss(max(remaining, 0.0))} left"
-                    bottom_depth_timer_text = eng.format_mmss(max(remaining, 0.0)) + " remaining"
+                    limit_min = no_decompression_limit(state.deco_mode, view.depth) if state.deco_mode is not None and view.depth is not None else None
+                    if limit_min is None:
+                        remaining_text = ""
+                    else:
+                        remaining = (limit_min * 60) - (now - view.ls.timestamp).total_seconds()
+                        remaining_text = f"Bottom: {eng.format_mmss(max(remaining, 0.0))} left"
+                        bottom_depth_timer_text = eng.format_mmss(max(remaining, 0.0)) + " remaining"
             elif view.profile.table_bottom_time_min is None:
                 remaining_text = ""
             else:
@@ -132,11 +139,11 @@ def create_snapshot(state: EngineState, now: datetime) -> Snapshot:
             remaining_text = ""
 
         if phase is eng.DivePhase.SURFACE and clean_remaining is not None:
-            summary_text = "Monitor diver for signs and symptoms of AGE"
+            summary_text = ""
         elif phase is eng.DivePhase.SURFACE:
             summary_text = ""
         elif phase is eng.DivePhase.BOTTOM and view.depth is None:
-            summary_text = "Input max depth for table/schedule"
+            summary_text = "Next: Input Max Depth for table/schedule"
         elif view.profile is None:
             summary_text = "Next: --"
         elif phase is eng.DivePhase.SURFACE or view.profile.is_no_decompression:
@@ -285,7 +292,7 @@ def _travel_remaining_text(state: EngineState, now: datetime, profile: DiveProfi
     if anchor_event is None:
         return None
     planned_elapsed_sec = int(abs(current_stop.depth_fsw - next_stop.depth_fsw) * 2)
-    elapsed_sec = max((now - anchor_event.timestamp).total_seconds(), 0.0)
+    elapsed_sec = eng._travel_progress_seconds(state, now, anchor_event.timestamp)
     remaining_sec = max(planned_elapsed_sec - elapsed_sec, 0.0)
     return f"{int(remaining_sec // 60):02d}:{int(remaining_sec % 60):02d} left"
 
@@ -302,7 +309,7 @@ def _o2_travel_stop_remaining_text(state: EngineState, now: datetime, profile: D
     anchor_event = eng._travel_anchor_event(state)
     if anchor_event is None:
         return None
-    elapsed_sec = max((now - anchor_event.timestamp).total_seconds(), 0.0)
+    elapsed_sec = eng._travel_progress_seconds(state, now, anchor_event.timestamp)
     remaining_sec = max((next_stop.duration_min * 60) - elapsed_sec, 0.0)
     return f"{int(remaining_sec // 60):02d}:{int(remaining_sec % 60):02d} left"
 
