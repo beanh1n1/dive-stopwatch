@@ -339,6 +339,7 @@ def _dive_view(state: EngineState, now: datetime) -> DiveView:
         stop_anchor = arrival.timestamp
     stop_remaining = None if current_stop is None or stop_anchor is None else (current_stop.duration_min * 60) - max((now - stop_anchor).total_seconds(), 0.0)
     air_break_required = _air_break_required(current_stop, stop_remaining)
+    o2_exposure_anchor = state.dive.oxygen.segment_started_at if at_o2_stop else None
     waiting_at_o2_stop = at_o2_stop and awaiting_o2
     on_o2_stop = at_o2_stop and state.dive.oxygen.segment_started_at is not None and active_break is None
     traveling_on_o2 = (
@@ -358,13 +359,13 @@ def _dive_view(state: EngineState, now: datetime) -> DiveView:
         at_o2_stop
         and air_break_required
         and not awaiting_o2
-        and state.dive.oxygen.segment_started_at is not None
+        and o2_exposure_anchor is not None
         and active_break is None
-        and max((now - state.dive.oxygen.segment_started_at).total_seconds(), 0.0) >= 1800
+        and max((now - o2_exposure_anchor).total_seconds(), 0.0) >= 1800
     )
     air_break_remaining = max(300.0 - (now - active_break).total_seconds(), 0.0) if active_break is not None else None
     resume_o2_remaining = None if (active_break is None or current_stop is None or stop_anchor is None) else max((current_stop.duration_min * 60) - max((active_break - stop_anchor).total_seconds(), 0.0), 0.0)
-    air_break_due = None if (not at_o2_stop or not air_break_required or awaiting_o2 or active_break is not None or state.dive.oxygen.segment_started_at is None or next_stop is not None) else max(1800.0 - (now - state.dive.oxygen.segment_started_at).total_seconds(), 0.0)
+    air_break_due = None if (not at_o2_stop or not air_break_required or awaiting_o2 or active_break is not None or o2_exposure_anchor is None) else max(1800.0 - (now - o2_exposure_anchor).total_seconds(), 0.0)
     return DiveView(
         depth=parse_depth_input(state.dive.depth_input_text),
         ls=find_latest_event(state.dive.events, "LS"),
@@ -620,8 +621,18 @@ def _merge_delay_profile(
 
 
 def _delay_recompute_log_line(recompute: DelayRecomputeState) -> str:
+    if recompute.outcome == "early_arrival":
+        return "Early arrival, schedule unchanged"
+    if recompute.outcome == "ignore_delay":
+        if recompute.delay_min > 0:
+            return f"Delay (+{recompute.delay_min}m) did not change schedule"
+        return "Delay <= 1m, schedule unchanged"
+    if recompute.outcome == "add_to_first_stop":
+        before = _profile_schedule_label(recompute.before_profile)
+        after = _profile_schedule_label(recompute.after_profile)
+        return f"First stop extended (+{recompute.delay_min}m) {before} -> {after}"
     if not recompute.schedule_changed:
-        return ""
+        return f"Delay (+{recompute.delay_min}m), schedule unchanged"
     before = _profile_schedule_label(recompute.before_profile)
     after = _profile_schedule_label(recompute.after_profile)
     return f"Schedule updated (+{recompute.delay_min}m) {before} -> {after}"

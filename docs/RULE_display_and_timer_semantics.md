@@ -2,6 +2,22 @@
 
 Status: Draft
 
+Rule IDs:
+- `9-6.4`
+- `9-8.2.1`
+- `9-8.2.2`
+
+Authority:
+- [US DIVING MANUAL_REV7_ChangeA-6.6.18_AIR_Decompression_Operations.pdf](/Users/iananderson/projects/DiveStopwatchProject/docs/US%20DIVING%20MANUAL_REV7_ChangeA-6.6.18_AIR_Decompression_Operations.pdf)
+
+Manual citation:
+- `9-6.4` stop timing semantics
+- `9-8.2.1` shifting to oxygen / TSV procedure
+- `9-8.2.2` air-break timing basis
+
+Scope status:
+- Implemented with app-specific display interpretation
+
 ## Purpose
 
 Define what the operator-facing status, timers, depth row, and next-action text
@@ -125,6 +141,8 @@ These rules apply whenever the app renders:
 
 - This rule captures app-specific display semantics rather than broader manual
   terminology.
+- The chapter citations above are the manual basis for the timing/procedure
+  contract; the visible UI mapping remains an app-specific interpretation layer.
 - The live app has already been iteratively tested against many of these semantics;
   this doc exists mainly to keep future hardening work aligned with the current
   product contract.

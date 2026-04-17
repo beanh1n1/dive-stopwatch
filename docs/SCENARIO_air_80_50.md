@@ -2,6 +2,22 @@
 
 Status: Draft
 
+Rule IDs:
+- `9-6.4`
+- `9-6.5`
+- `9-8.1`
+
+Authority:
+- [US DIVING MANUAL_REV7_ChangeA-6.6.18_AIR_Decompression_Operations.pdf](/Users/iananderson/projects/DiveStopwatchProject/docs/US%20DIVING%20MANUAL_REV7_ChangeA-6.6.18_AIR_Decompression_Operations.pdf)
+
+Manual citation:
+- `9-6.4` stop timing semantics
+- `9-6.5` last water stop
+- `9-8.1` in-water decompression on air
+
+Scope status:
+- Implemented with app-specific operator-confirmed workflow
+
 ## Purpose
 
 Validate a straightforward in-water air decompression lookup and resulting stop

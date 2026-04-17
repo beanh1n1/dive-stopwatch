@@ -2,6 +2,20 @@
 
 Status: Draft
 
+Rule IDs:
+- `<chapter-citation>`
+
+Authority:
+- [US DIVING MANUAL_REV7_ChangeA-6.6.18_AIR_Decompression_Operations.pdf](/Users/iananderson/projects/DiveStopwatchProject/docs/US%20DIVING%20MANUAL_REV7_ChangeA-6.6.18_AIR_Decompression_Operations.pdf)
+
+Manual citation:
+- `<section number and/or page reference>`
+
+Scope status:
+- `Implemented`
+- or `Implemented with app-specific operator-confirmed workflow`
+- or `Partially Implemented`
+
 ## Purpose
 
 What this scenario is meant to validate.

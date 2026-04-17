@@ -2,6 +2,20 @@
 
 Status: Draft
 
+Rule IDs:
+- `9-8.2.2` for oxygen-delay handling
+- `Chapter 9, pp. 9-31 to 9-35` for ascent-delay guidance pending finer subsection mapping
+
+Authority:
+- [US DIVING MANUAL_REV7_ChangeA-6.6.18_AIR_Decompression_Operations.pdf](/Users/iananderson/projects/DiveStopwatchProject/docs/US%20DIVING%20MANUAL_REV7_ChangeA-6.6.18_AIR_Decompression_Operations.pdf)
+
+Manual citation:
+- `9-8.2.2` air breaks at `30` and `20 fsw`
+- Chapter 9 delay guidance on pp. `9-31` to `9-35`
+
+Scope status:
+- Partially Implemented
+
 ## Purpose
 
 Define how ascent delays are handled, including when they are ignored, when they
@@ -99,14 +113,16 @@ stop is delayed beyond expected travel timing.
 
 ## Notes
 
-- Source material came from the delay/variation handling text supplied in
-  `Edge_cases.txt`.
+- Source material originally came from working notes, but the governing authority
+  is now the AIR Decompression chapter and the cited delay pages.
 - This rule intentionally separates:
   - first-stop delays
   - air-stop departure/between-stop delays
   - oxygen delays
 - The live runtime applies these rules only within the currently implemented
   in-water supervisory workflow.
+- The broad ascent-delay logic has been mapped to the manual pages, but the exact
+  subsection header should still be tightened in a later citation pass.
 - Surface decompression delay handling described in the broader manual is currently
   out of scope.
 

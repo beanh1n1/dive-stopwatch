@@ -2,6 +2,26 @@
 
 Status: Draft
 
+Rule IDs:
+- `9-6.4`
+- `9-6.5`
+- `9-8.1`
+- `9-8.2`
+- `9-8.2.1`
+
+Authority:
+- [US DIVING MANUAL_REV7_ChangeA-6.6.18_AIR_Decompression_Operations.pdf](/Users/iananderson/projects/DiveStopwatchProject/docs/US%20DIVING%20MANUAL_REV7_ChangeA-6.6.18_AIR_Decompression_Operations.pdf)
+
+Manual citation:
+- `9-6.4` stop timing semantics
+- `9-6.5` last water stop
+- `9-8.1` in-water decompression on air
+- `9-8.2` in-water decompression on air and oxygen
+- `9-8.2.1` shifting to 100% oxygen / procedural TSV
+
+Scope status:
+- Implemented with app-specific operator-confirmed workflow
+
 ## Purpose
 
 Define the core dive timing, depth, travel, and decompression terms that the live
@@ -92,8 +112,8 @@ These definitions apply whenever the runtime:
 
 ## Notes
 
-- Source material came from the air decompression manual definitions and terminology
-  notes supplied in `Definitions.txt`.
+- Source material came from the AIR Decompression chapter and is now subordinate
+  to the cited manual PDF rather than to earlier working notes.
 - This rule document defines vocabulary and timing semantics only. Delay corrections
   and worked examples are covered in separate docs.
 - The live app uses an explicit operator-confirmed event model. Estimated travel or

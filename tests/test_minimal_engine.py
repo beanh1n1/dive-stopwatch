@@ -671,6 +671,7 @@ class MinimalEngineTests(unittest.TestCase):
         self.assertEqual(engine.state.dive.last_delay_recompute.outcome, "ignore_delay")
         self.assertFalse(engine.state.dive.last_delay_recompute.schedule_changed)
         self.assertFalse(any(line.startswith("Schedule updated (+") for line in engine.state.ui_log))
+        self.assertTrue(any(line == "Delay <= 1m, schedule unchanged" for line in engine.state.ui_log))
 
     def test_shallow_first_stop_delay_extends_first_stop_without_table_recompute(self) -> None:
         current = {"now": datetime(2026, 4, 12, 12, 0, 0)}
@@ -702,6 +703,7 @@ class MinimalEngineTests(unittest.TestCase):
         self.assertIsNotNone(engine.state.dive.last_delay_recompute)
         self.assertEqual(engine.state.dive.last_delay_recompute.outcome, "add_to_first_stop")
         self.assertEqual(engine.state.dive.last_delay_recompute.after_profile, updated)
+        self.assertTrue(engine.state.ui_log[-1].startswith("First stop extended (+4m)"))
 
     def test_between_stop_delay_restarts_remaining_schedule_when_recomputed(self) -> None:
         current = {"now": datetime(2026, 4, 12, 12, 0, 0)}
@@ -796,6 +798,7 @@ class MinimalEngineTests(unittest.TestCase):
         self.assertFalse(engine.state.dive.last_delay_recompute.schedule_changed)
         self.assertEqual(snap.summary_text, "Next: 30 fsw for 28m")
         self.assertFalse(any(line.startswith("Schedule updated (+") for line in engine.state.ui_log))
+        self.assertTrue(any(line == "Delay <= 1m, schedule unchanged" for line in engine.state.ui_log))
 
     def test_incomplete_air_break_logs_warning(self) -> None:
         current = {"now": datetime(2026, 4, 12, 12, 0, 0)}
@@ -995,6 +998,41 @@ class MinimalEngineTests(unittest.TestCase):
         self.assertEqual(snap.secondary_button_label, "")
         self.assertFalse(snap.secondary_button_enabled)
 
+    def test_final_twenty_o2_stop_carries_continuous_o2_air_break_timer(self) -> None:
+        current = {"now": datetime(2026, 4, 12, 12, 0, 0)}
+        engine = Engine(now_provider=lambda: current["now"])
+        engine.set_depth_text("120")
+        engine.dispatch(Intent.MODE)
+        engine.dispatch(Intent.MODE)
+        engine.dispatch(Intent.PRIMARY)  # LS
+        current["now"] += timedelta(minutes=3)
+        engine.dispatch(Intent.PRIMARY)  # RB
+        current["now"] += timedelta(minutes=87)
+        engine.dispatch(Intent.PRIMARY)  # LB
+        current["now"] += timedelta(minutes=3)
+        engine.dispatch(Intent.PRIMARY)  # R1 50
+        current["now"] += timedelta(minutes=7)
+        engine.dispatch(Intent.PRIMARY)  # L1
+        current["now"] += timedelta(minutes=2)
+        engine.dispatch(Intent.PRIMARY)  # R2 40
+        current["now"] += timedelta(minutes=26)
+        engine.dispatch(Intent.PRIMARY)  # L2
+        current["now"] += timedelta(minutes=2)
+        engine.dispatch(Intent.PRIMARY)  # R3 30
+        engine.dispatch(Intent.SECONDARY)  # On O2
+        current["now"] += timedelta(minutes=14)
+        engine.dispatch(Intent.PRIMARY)  # L3
+        current["now"] += timedelta(minutes=2)
+        engine.dispatch(Intent.PRIMARY)  # R4 20
+
+        snap = engine.snapshot()
+        self.assertEqual(snap.summary_text, "Next: Air break in 14:00")
+
+        current["now"] += timedelta(minutes=14)
+        due = engine.snapshot()
+        self.assertEqual(due.summary_text, "Next: Air break in 00:00")
+        self.assertEqual(due.secondary_button_label, "Off O2")
+
     def test_first_o2_stop_timer_anchors_to_on_o2_confirmation(self) -> None:
         current = {"now": datetime(2026, 4, 12, 12, 0, 0)}
         engine = Engine(now_provider=lambda: current["now"])
@@ -1116,7 +1154,7 @@ class MinimalEngineTests(unittest.TestCase):
         self.assertEqual(after_break.secondary_button_label, "")
         self.assertFalse(after_break.secondary_button_enabled)
 
-    def test_o2_stop_prefers_next_stop_over_future_air_break_when_next_stop_exists(self) -> None:
+    def test_o2_stop_prefers_next_stop_until_air_break_due_occurs_before_stop_end(self) -> None:
         current = {"now": datetime(2026, 4, 12, 12, 0, 0)}
         engine = Engine(now_provider=lambda: current["now"])
         engine.set_depth_text("145")
@@ -1144,7 +1182,7 @@ class MinimalEngineTests(unittest.TestCase):
         self.assertEqual(snap.remaining_text, "Stop: 07:00 left")
         self.assertEqual(snap.summary_text, "Next: 20 fsw for 40m")
 
-    def test_o2_stop_with_next_stop_never_shows_future_air_break_summary(self) -> None:
+    def test_o2_stop_with_next_stop_keeps_next_stop_summary_when_break_is_later(self) -> None:
         current = {"now": datetime(2026, 4, 12, 12, 0, 0)}
         engine = Engine(now_provider=lambda: current["now"])
         engine.set_depth_text("145")
@@ -1170,7 +1208,6 @@ class MinimalEngineTests(unittest.TestCase):
 
         self.assertEqual(snap.depth_text, "30 fsw")
         self.assertEqual(snap.summary_text, "Next: 20 fsw for 40m")
-        self.assertFalse(snap.summary_text.startswith("Next: Air break in"))
 
     def test_next_row_never_previews_later_action_when_nearer_action_exists(self) -> None:
         current = {"now": datetime(2026, 4, 12, 12, 0, 0)}

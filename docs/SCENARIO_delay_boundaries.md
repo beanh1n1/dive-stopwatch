@@ -2,6 +2,23 @@
 
 Status: Draft
 
+Rule IDs:
+- `9-11.3`
+- `9-11.4`
+- `9-8.2.2`
+
+Authority:
+- [US DIVING MANUAL_REV7_ChangeA-6.6.18_AIR_Decompression_Operations.pdf](/Users/iananderson/projects/DiveStopwatchProject/docs/US%20DIVING%20MANUAL_REV7_ChangeA-6.6.18_AIR_Decompression_Operations.pdf)
+
+Manual citation:
+- `9-11.3` delays in arriving at the first decompression stop
+- `9-11.4` delays in leaving a stop or between decompression stops
+- `9-8.2.2` oxygen-delay handling at `30` and `20 fsw`
+- examples on pp. `9-31` to `9-35`
+
+Scope status:
+- Partially Implemented
+
 ## Purpose
 
 Capture the highest-risk delay correction boundaries at exactly `1 minute` and

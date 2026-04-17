@@ -217,13 +217,27 @@ class MobileDiveStopwatchApp:
         self.page.window_width = 430
         self.page.bgcolor = self.APP_BACKGROUND
         self.page.appbar = ft.AppBar(
-            title=ft.Text(
-                "Caisson Instruments",
-                size=24,
-                weight=ft.FontWeight.W_700,
-                italic=True,
-                font_family="Helvetica Neue",
-                color=self.DEFAULT_TEXT_COLOR,
+            title=ft.Row(
+                spacing=8,
+                vertical_alignment=ft.CrossAxisAlignment.END,
+                controls=[
+                    ft.Text(
+                        "Caisson",
+                        size=40,
+                        weight=ft.FontWeight.W_700,
+                        italic=True,
+                        font_family="Helvetica Neue",
+                        color=self.DEFAULT_TEXT_COLOR,
+                    ),
+                    ft.Text(
+                        "Instruments",
+                        size=31,
+                        weight=ft.FontWeight.W_700,
+                        font_family="Helvetica Neue",
+                        color=self.DEFAULT_TEXT_COLOR,
+                        style=ft.TextStyle(letter_spacing=1.4),
+                    ),
+                ],
             ),
             center_title=False,
             bgcolor=self.APPBAR_BACKGROUND,
@@ -339,6 +353,9 @@ class MobileDiveStopwatchApp:
         self.summary_prefix_text.value = snap.summary_prefix_text
         self.summary_value_text.value = snap.summary_value_text
         self.summary_row.visible = bool(snap.summary_prefix_text or snap.summary_value_text)
+        guidance_summary = snap.summary_prefix_text == "Next: Input Max Depth for table/schedule" and not snap.summary_value_text
+        self.summary_prefix_text.italic = guidance_summary
+        self.summary_value_text.italic = False
         self._apply_phase_colors(snap)
         self.primary_body_switcher.content = self.primary_recall_body if self.recall_active else self.primary_live_body
         self.recall_button.text = "Live" if self.recall_active else "Recall"

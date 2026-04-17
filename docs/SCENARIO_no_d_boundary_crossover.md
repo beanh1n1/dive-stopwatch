@@ -2,6 +2,19 @@
 
 Status: Draft
 
+Rule IDs:
+- `9-8.1`
+
+Authority:
+- [US DIVING MANUAL_REV7_ChangeA-6.6.18_AIR_Decompression_Operations.pdf](/Users/iananderson/projects/DiveStopwatchProject/docs/US%20DIVING%20MANUAL_REV7_ChangeA-6.6.18_AIR_Decompression_Operations.pdf)
+
+Manual citation:
+- `9-8.1` in-water decompression on air
+- Table-entry semantics from the AIR decompression table
+
+Scope status:
+- Implemented with app-specific bottom-display interpretation
+
 ## Purpose
 
 Capture the user-visible transition from a no-decompression dive with `Next:

@@ -13,6 +13,20 @@ The intent is:
 
 This keeps the runtime contract stable before we expand the test surface.
 
+## Source Authority
+
+The governing authority is:
+
+1. [US DIVING MANUAL_REV7_ChangeA-6.6.18_AIR_Decompression_Operations.pdf](/Users/iananderson/projects/DiveStopwatchProject/docs/US%20DIVING%20MANUAL_REV7_ChangeA-6.6.18_AIR_Decompression_Operations.pdf)
+2. [SOURCE_OF_TRUTH.md](/Users/iananderson/projects/DiveStopwatchProject/docs/SOURCE_OF_TRUTH.md)
+3. [RULE_TRACEABILITY_MATRIX.md](/Users/iananderson/projects/DiveStopwatchProject/docs/RULE_TRACEABILITY_MATRIX.md)
+4. rule docs
+5. scenario docs
+6. tests
+7. code
+
+Rule IDs should use actual chapter citation numbers from the manual.
+
 ## Suggested Workflow
 
 1. Add or edit rule documents using `RULE_TEMPLATE.md`

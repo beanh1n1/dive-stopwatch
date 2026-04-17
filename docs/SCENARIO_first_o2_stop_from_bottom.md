@@ -2,6 +2,20 @@
 
 Status: Draft
 
+Rule IDs:
+- `9-6.4`
+- `9-8.2.1`
+
+Authority:
+- [US DIVING MANUAL_REV7_ChangeA-6.6.18_AIR_Decompression_Operations.pdf](/Users/iananderson/projects/DiveStopwatchProject/docs/US%20DIVING%20MANUAL_REV7_ChangeA-6.6.18_AIR_Decompression_Operations.pdf)
+
+Manual citation:
+- `9-6.4` stop timing semantics, including first O2-stop timing exception
+- `9-8.2.1` first O2 stop shift/vent/confirm / TSV procedure
+
+Scope status:
+- Implemented with app-specific operator-confirmed workflow
+
 ## Purpose
 
 Capture the branch where the first decompression stop is itself an O2 stop, so

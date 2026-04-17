@@ -2,6 +2,19 @@
 
 Status: Draft
 
+Rule IDs:
+- `9-8.2.2`
+
+Authority:
+- [US DIVING MANUAL_REV7_ChangeA-6.6.18_AIR_Decompression_Operations.pdf](/Users/iananderson/projects/DiveStopwatchProject/docs/US%20DIVING%20MANUAL_REV7_ChangeA-6.6.18_AIR_Decompression_Operations.pdf)
+
+Manual citation:
+- `9-8.2.2` air breaks at `30` and `20 fsw`
+- worked AIR/O2 example on pp. `9-14` to `9-15`
+
+Scope status:
+- Implemented with app-specific operator-confirmed workflow
+
 ## Purpose
 
 Capture the full lifecycle of air-break eligibility, start, blocked early end,

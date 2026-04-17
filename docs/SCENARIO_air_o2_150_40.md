@@ -2,6 +2,27 @@
 
 Status: Draft
 
+Rule IDs:
+- `9-6.4`
+- `9-6.5`
+- `9-8.2`
+- `9-8.2.1`
+- `9-8.2.2`
+
+Authority:
+- [US DIVING MANUAL_REV7_ChangeA-6.6.18_AIR_Decompression_Operations.pdf](/Users/iananderson/projects/DiveStopwatchProject/docs/US%20DIVING%20MANUAL_REV7_ChangeA-6.6.18_AIR_Decompression_Operations.pdf)
+
+Manual citation:
+- `9-6.4` stop timing semantics
+- `9-6.5` last water stop
+- `9-8.2` in-water decompression on air and oxygen
+- `9-8.2.1` procedures for shifting to 100% oxygen / TSV
+- `9-8.2.2` air breaks at `30` and `20 fsw`
+- worked example on pp. `9-14` to `9-15`
+
+Scope status:
+- Implemented with app-specific operator-confirmed workflow
+
 ## Purpose
 
 Validate a worked AIR/O2 table entry with mixed air and oxygen decompression,
