@@ -454,6 +454,44 @@ class MinimalEngineTests(unittest.TestCase):
         self.assertEqual(snap.summary_text, "Next: 20 fsw for 39m")
         self.assertEqual(snap.secondary_button_label, "On O2")
 
+    def test_first_o2_stop_after_air_stop_shows_travel_then_tsv_acceptance_state(self) -> None:
+        current = {"now": datetime(2026, 4, 12, 12, 0, 0)}
+        engine = Engine(now_provider=lambda: current["now"])
+        engine.set_depth_text("145")
+        engine.dispatch(Intent.MODE)
+        engine.dispatch(Intent.MODE)
+        engine.dispatch(Intent.PRIMARY)  # LS
+        current["now"] += timedelta(minutes=3)
+        engine.dispatch(Intent.PRIMARY)  # RB
+        current["now"] += timedelta(minutes=39)
+        engine.dispatch(Intent.PRIMARY)  # LB
+        current["now"] += timedelta(minutes=3)
+        engine.dispatch(Intent.PRIMARY)  # R1 50
+        engine.dispatch(Intent.PRIMARY)  # L1
+        current["now"] += timedelta(minutes=2)
+        engine.dispatch(Intent.PRIMARY)  # R2 40
+        engine.dispatch(Intent.PRIMARY)  # L2
+
+        traveling = engine.snapshot()
+        self.assertEqual(traveling.status_text, "TRAVELING")
+        self.assertEqual(traveling.status_value_text, "Traveling")
+        self.assertEqual(traveling.depth_text, "40 fsw")
+        self.assertEqual(traveling.primary_text, "00:00.0")
+        self.assertEqual(traveling.summary_text, "Next: 30 fsw for 12m")
+
+        current["now"] += timedelta(minutes=6)
+        engine.dispatch(Intent.PRIMARY)  # R3 30
+
+        at_o2 = engine.snapshot()
+        self.assertEqual(at_o2.status_text, "AT O2 STOP")
+        self.assertEqual(at_o2.status_value_text, "TSV")
+        self.assertEqual(at_o2.primary_text, "TSV 06:00.0")
+        self.assertEqual(at_o2.depth_text, "30 fsw")
+        self.assertEqual(at_o2.depth_timer_text, "12:00 left")
+        self.assertEqual(at_o2.summary_text, "Next: 20 fsw for 40m")
+        self.assertEqual(at_o2.primary_button_label, "Leave Stop")
+        self.assertEqual(at_o2.secondary_button_label, "On O2")
+
     def test_travel_to_first_o2_stop_keeps_traveling_status(self) -> None:
         current = {"now": datetime(2026, 4, 12, 12, 0, 0)}
         engine = Engine(now_provider=lambda: current["now"])
@@ -1032,6 +1070,121 @@ class MinimalEngineTests(unittest.TestCase):
         due = engine.snapshot()
         self.assertEqual(due.summary_text, "Next: Air break in 00:00")
         self.assertEqual(due.secondary_button_label, "Off O2")
+
+    def test_exact_thirty_minute_continuous_o2_threshold_becomes_due_at_thirty_fsw(self) -> None:
+        current = {"now": datetime(2026, 4, 12, 12, 0, 0)}
+        engine = Engine(now_provider=lambda: current["now"])
+        engine.set_depth_text("190")
+        engine.dispatch(Intent.MODE)
+        engine.dispatch(Intent.MODE)
+        engine.dispatch(Intent.PRIMARY)  # LS
+        current["now"] += timedelta(minutes=3)
+        engine.dispatch(Intent.PRIMARY)  # RB
+        current["now"] += timedelta(minutes=90)
+        engine.dispatch(Intent.PRIMARY)  # LB
+        current["now"] += timedelta(minutes=3, seconds=20)
+        engine.dispatch(Intent.PRIMARY)  # R1 90
+        current["now"] += timedelta(minutes=11)
+        engine.dispatch(Intent.PRIMARY)  # L1
+        current["now"] += timedelta(seconds=20)
+        engine.dispatch(Intent.PRIMARY)  # R2 80
+        current["now"] += timedelta(minutes=19)
+        engine.dispatch(Intent.PRIMARY)  # L2
+        current["now"] += timedelta(seconds=20)
+        engine.dispatch(Intent.PRIMARY)  # R3 70
+        current["now"] += timedelta(minutes=20)
+        engine.dispatch(Intent.PRIMARY)  # L3
+        current["now"] += timedelta(seconds=20)
+        engine.dispatch(Intent.PRIMARY)  # R4 60
+        current["now"] += timedelta(minutes=21)
+        engine.dispatch(Intent.PRIMARY)  # L4
+        current["now"] += timedelta(seconds=20)
+        engine.dispatch(Intent.PRIMARY)  # R5 50
+        current["now"] += timedelta(minutes=28)
+        engine.dispatch(Intent.PRIMARY)  # L5
+        current["now"] += timedelta(seconds=20)
+        engine.dispatch(Intent.PRIMARY)  # R6 40
+        current["now"] += timedelta(minutes=51)
+        engine.dispatch(Intent.PRIMARY)  # L6
+        current["now"] += timedelta(seconds=20)
+        engine.dispatch(Intent.PRIMARY)  # R7 40
+        current["now"] += timedelta(minutes=55)
+        engine.dispatch(Intent.PRIMARY)  # L7
+        current["now"] += timedelta(seconds=20)
+        engine.dispatch(Intent.PRIMARY)  # R8 30
+        engine.dispatch(Intent.SECONDARY)  # On O2
+
+        current["now"] += timedelta(minutes=29, seconds=59)
+        before_due = engine.snapshot()
+        self.assertEqual(before_due.depth_text, "30 fsw")
+        self.assertEqual(before_due.summary_text, "Next: Air break in 00:01")
+        self.assertEqual(before_due.secondary_button_label, "")
+        self.assertFalse(before_due.secondary_button_enabled)
+
+        current["now"] += timedelta(seconds=1)
+        due = engine.snapshot()
+        self.assertEqual(due.depth_text, "30 fsw")
+        self.assertEqual(due.summary_text, "Next: Air break in 00:00")
+        self.assertEqual(due.secondary_button_label, "Off O2")
+        self.assertTrue(due.secondary_button_enabled)
+
+    def test_mixed_stop_anchor_chain_keeps_expected_anchor_semantics(self) -> None:
+        current = {"now": datetime(2026, 4, 12, 12, 0, 0)}
+        engine = Engine(now_provider=lambda: current["now"])
+        engine.set_depth_text("145")
+        engine.dispatch(Intent.MODE)
+        engine.dispatch(Intent.MODE)
+        engine.dispatch(Intent.PRIMARY)  # LS
+        current["now"] += timedelta(minutes=3)
+        engine.dispatch(Intent.PRIMARY)  # RB
+        current["now"] += timedelta(minutes=39)
+        engine.dispatch(Intent.PRIMARY)  # LB
+        current["now"] += timedelta(minutes=3)
+        engine.dispatch(Intent.PRIMARY)  # R1 50
+
+        first_air = engine.snapshot()
+        self.assertEqual(first_air.depth_text, "50 fsw")
+        self.assertEqual(first_air.primary_text, "00:00.0")
+        self.assertEqual(first_air.remaining_text, "Stop: 03:00 left")
+        self.assertEqual(first_air.summary_text, "Next: 40 fsw for 8m")
+
+        engine.dispatch(Intent.PRIMARY)  # L1
+        current["now"] += timedelta(minutes=2)
+        engine.dispatch(Intent.PRIMARY)  # R2 40
+
+        later_air = engine.snapshot()
+        self.assertEqual(later_air.depth_text, "40 fsw")
+        self.assertEqual(later_air.primary_text, "02:00.0")
+        self.assertEqual(later_air.remaining_text, "Stop: 06:00 left")
+        self.assertEqual(later_air.summary_text, "Next: 30 fsw for 12m")
+
+        engine.dispatch(Intent.PRIMARY)  # L2
+        current["now"] += timedelta(minutes=6)
+        engine.dispatch(Intent.PRIMARY)  # R3 30
+
+        first_o2 = engine.snapshot()
+        self.assertEqual(first_o2.depth_text, "30 fsw")
+        self.assertEqual(first_o2.status_value_text, "TSV")
+        self.assertEqual(first_o2.primary_text, "TSV 06:00.0")
+        self.assertEqual(first_o2.summary_text, "Next: 20 fsw for 40m")
+
+        engine.dispatch(Intent.SECONDARY)  # On O2
+        on_o2 = engine.snapshot()
+        self.assertEqual(on_o2.primary_text, "00:00.0")
+        self.assertEqual(on_o2.remaining_text, "Stop: 12:00 left")
+        self.assertEqual(on_o2.summary_text, "Next: 20 fsw for 40m")
+
+        current["now"] += timedelta(minutes=14)
+        engine.dispatch(Intent.PRIMARY)  # L3
+        current["now"] += timedelta(minutes=2)
+        engine.dispatch(Intent.PRIMARY)  # R4 20
+
+        next_o2 = engine.snapshot()
+        self.assertEqual(next_o2.depth_text, "20 fsw")
+        self.assertEqual(next_o2.status_value_text, "On O2")
+        self.assertEqual(next_o2.primary_text, "02:00.0")
+        self.assertEqual(next_o2.remaining_text, "Stop: 38:00 left")
+        self.assertEqual(next_o2.summary_text, "Next: Air break in 14:00")
 
     def test_first_o2_stop_timer_anchors_to_on_o2_confirmation(self) -> None:
         current = {"now": datetime(2026, 4, 12, 12, 0, 0)}

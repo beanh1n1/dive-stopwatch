@@ -77,12 +77,17 @@ These definitions apply whenever the runtime:
 - AIR/O2 stops deeper than `30 fsw` are on air.
 - AIR/O2 O2 stops commence at `30 fsw` or `20 fsw` depending on the table row.
 - Procedural `TSV` means `Travel/Shift/Vent` time.
-- For dives with the first stop at `40 fsw` or deeper, procedural `TSV` includes:
+- Explicitly, procedural `TSV` is:
+  - `L40 -> On O2 @ 30 fsw` when the first oxygen stop follows a `40 fsw` air stop
+  - `R30 -> On O2` when the first stop itself is an O2 stop at `30 fsw`
+  - `R20 -> On O2` when the first stop itself is an O2 stop at `20 fsw`
+- For dives with the first stop at `40 fsw` or deeper, this means procedural `TSV`
+  includes:
   - the `40 -> 30` ascent segment
   - gas shift
   - confirmation time to establish that divers are on O2
-- For dives whose first stop is an O2 stop at `30 fsw` or `20 fsw`, procedural
-  `TSV` excludes travel to the stop and includes only:
+- For dives whose first stop is an O2 stop at `30 fsw` or `20 fsw`, this means
+  procedural `TSV` excludes travel to the stop and includes only:
   - gas shift
   - confirmation time to establish that divers are on O2
 

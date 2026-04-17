@@ -77,6 +77,11 @@ These rules apply whenever the app renders:
   - procedural `TSV` is defined in `RULE_core_definitions.md`
   - display status `TSV` is used only once the runtime is at the first O2 stop and
     waiting for O2 confirmation
+- Explicit display-anchor rule:
+  - if the first O2 stop follows a `40 fsw` air stop, visible `TSV` represents
+    `L40 -> On O2 @ 30 fsw`
+  - if the first stop itself is an O2 stop, visible `TSV` represents
+    `R30 -> On O2` or `R20 -> On O2`
 - At an O2 stop after confirmation, the main timer reflects elapsed O2 time from
   the active O2 anchor.
 - During an active air break, the main timer reflects elapsed air-break time.
@@ -150,9 +155,11 @@ These rules apply whenever the app renders:
 ## Test Cases
 
 - Happy path:
-  - `L40 -> R30 -> On O2` shows `TRAVELING`, then `TSV`, then `On O2`
+  - `L40 -> R30 -> On O2` shows `TRAVELING`, then `TSV`, then `On O2`, with
+    procedural TSV meaning `L40 -> On O2 @ 30 fsw`
 - Edge case:
-  - `BOTTOM -> first O2 stop` uses `TRAVELING` before `R1`, then `TSV` after `R1`
+  - `BOTTOM -> first O2 stop` uses `TRAVELING` before `R1`, then `TSV` after `R1`,
+    with procedural TSV meaning `R30/R20 -> On O2`
 - Regression case:
   - `Next` must always reflect the actual next stop/action from the schedule
 

@@ -66,6 +66,9 @@ Capture the branch where the first decompression stop is itself an O2 stop, so
 ## Critical Assertions
 
 - `TSV` is anchored from `R1 -> On O2`
+- Explicitly:
+  - if `R1` is `30 fsw`, `TSV = R30 -> On O2`
+  - if `R1` is `20 fsw`, `TSV = R20 -> On O2`
 - No prior travel segment is included in this `TSV`
 - First O2 stop timer does not begin before `On O2`
 - Display status is `TRAVELING` before `R1`, not `TSV`
