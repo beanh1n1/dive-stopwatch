@@ -10,6 +10,7 @@ from .profiles import (
     DelayResult,
     DiveProfile,
     ProfileStop,
+    apply_oxygen_travel_delay,
     apply_between_stop_delay,
     apply_first_stop_delay,
     build_profile,
@@ -64,6 +65,8 @@ class DelayRecomputeState:
     outcome: str
     before_profile: DiveProfile
     after_profile: DiveProfile
+    credited_o2_min: int = 0
+    air_interruption_min: int = 0
 
 
 @dataclass(frozen=True)
@@ -605,6 +608,32 @@ def _apply_delay_result(state: EngineState, now: datetime, delay: DelayState) ->
     if next_stop is None or current_stop is None:
         return state
 
+    if (
+        current_stop.gas == "o2"
+        and next_stop.gas == "o2"
+        and current_stop.depth_fsw == 30
+        and next_stop.depth_fsw == 20
+        and state.dive.oxygen.segment_started_at is not None
+    ):
+        o2_time_before_delay_sec = max(int((delay.started_at - state.dive.oxygen.segment_started_at).total_seconds()), 0)
+        result = apply_oxygen_travel_delay(
+            profile=profile,
+            from_stop_index=delay.from_stop_index,
+            delay_elapsed_sec=delay_elapsed_sec,
+            o2_time_before_delay_sec=o2_time_before_delay_sec,
+        )
+        merged = _merge_delay_profile(state, now, profile, result)
+        if result.air_interruption_min > 0:
+            merged = replace(
+                merged,
+                dive=replace(
+                    merged.dive,
+                    oxygen=replace(merged.dive.oxygen, segment_started_at=now, active_air_break=None),
+                ),
+                ui_log=merged.ui_log + (f"O2 delay interruption ({result.air_interruption_min}m air) ignored for O2 credit",),
+            )
+        return merged
+
     planned_elapsed_sec = int(abs(current_stop.depth_fsw - next_stop.depth_fsw) * 2)
     result = apply_between_stop_delay(
         profile=profile,
@@ -631,6 +660,8 @@ def _merge_delay_profile(
         outcome=result.outcome,
         before_profile=before_profile,
         after_profile=profile,
+        credited_o2_min=result.credited_o2_min,
+        air_interruption_min=result.air_interruption_min,
     )
     updated = replace(
         state,
@@ -649,6 +680,17 @@ def _merge_delay_profile(
 def _delay_recompute_log_line(recompute: DelayRecomputeState) -> str:
     if recompute.outcome == "early_arrival":
         return "Early arrival, schedule unchanged"
+    if recompute.outcome == "o2_delay_credit":
+        before = _profile_schedule_label(recompute.before_profile)
+        after = _profile_schedule_label(recompute.after_profile)
+        base = (
+            f"O2 delay credited (+{recompute.credited_o2_min}m) {before} -> {after}"
+            if recompute.credited_o2_min > 0
+            else f"O2 delay did not add O2 credit (+{recompute.delay_min}m delay)"
+        )
+        if recompute.air_interruption_min > 0:
+            return f"{base}; {recompute.air_interruption_min}m on air ignored"
+        return base
     if recompute.outcome == "ignore_delay":
         if recompute.delay_min > 0:
             return f"Delay (+{recompute.delay_min}m) did not change schedule"

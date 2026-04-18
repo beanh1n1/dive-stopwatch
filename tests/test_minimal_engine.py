@@ -332,7 +332,7 @@ class MinimalEngineTests(unittest.TestCase):
         engine.dispatch(Intent.PRIMARY)
         current["now"] += timedelta(minutes=3)
         engine.dispatch(Intent.PRIMARY)
-        current["now"] += timedelta(minutes=39)
+        current["now"] += timedelta(minutes=37)
         engine.dispatch(Intent.PRIMARY)
         current["now"] += timedelta(minutes=3)
         engine.dispatch(Intent.PRIMARY)  # R1 50
@@ -360,7 +360,7 @@ class MinimalEngineTests(unittest.TestCase):
         engine.dispatch(Intent.PRIMARY)  # LS
         current["now"] += timedelta(minutes=3)
         engine.dispatch(Intent.PRIMARY)  # RB
-        current["now"] += timedelta(minutes=39)
+        current["now"] += timedelta(minutes=37)
         engine.dispatch(Intent.PRIMARY)  # LB
         current["now"] += timedelta(minutes=3)
         engine.dispatch(Intent.PRIMARY)  # R1 50
@@ -1115,6 +1115,100 @@ class MinimalEngineTests(unittest.TestCase):
         self.assertEqual(still_no_break.summary_text, "Next: Surface")
         self.assertEqual(still_no_break.secondary_button_label, "")
         self.assertFalse(still_no_break.secondary_button_enabled)
+
+    def test_oxygen_delay_during_travel_from_thirty_to_twenty_reduces_twenty_stop(self) -> None:
+        current = {"now": datetime(2026, 4, 12, 12, 0, 0)}
+        engine = Engine(now_provider=lambda: current["now"])
+        engine.set_depth_text("145")
+        engine.dispatch(Intent.MODE)
+        engine.dispatch(Intent.MODE)
+        engine.dispatch(Intent.PRIMARY)  # LS
+        current["now"] += timedelta(minutes=3)
+        engine.dispatch(Intent.PRIMARY)  # RB
+        current["now"] += timedelta(minutes=37)
+        engine.dispatch(Intent.PRIMARY)  # LB
+        current["now"] += timedelta(minutes=3)
+        engine.dispatch(Intent.PRIMARY)  # R1 50
+        engine.dispatch(Intent.PRIMARY)  # L1
+        current["now"] += timedelta(minutes=2)
+        engine.dispatch(Intent.PRIMARY)  # R2 40
+        engine.dispatch(Intent.PRIMARY)  # L2
+        current["now"] += timedelta(minutes=6)
+        engine.dispatch(Intent.PRIMARY)  # R3 30
+        engine.dispatch(Intent.SECONDARY)  # On O2
+        current["now"] += timedelta(minutes=7)
+        engine.dispatch(Intent.PRIMARY)  # L3
+        current["now"] += timedelta(seconds=10)
+        engine.dispatch(Intent.SECONDARY)  # delay start in O2 travel
+        current["now"] += timedelta(minutes=2)
+        engine.dispatch(Intent.SECONDARY)  # delay end
+
+        after_delay = engine.snapshot()
+        self.assertEqual(after_delay.depth_text, "25 fsw")
+        self.assertEqual(after_delay.summary_text, "Next: 20 fsw for 33m")
+        self.assertIsNotNone(engine.state.dive.last_delay_recompute)
+        self.assertEqual(engine.state.dive.last_delay_recompute.outcome, "o2_delay_credit")
+        self.assertEqual(engine.state.dive.last_delay_recompute.credited_o2_min, 2)
+        self.assertEqual(engine.state.dive.last_delay_recompute.air_interruption_min, 0)
+        self.assertTrue(engine.state.ui_log[-1].startswith("O2 delay credited (+2m)"))
+
+        current["now"] += timedelta(seconds=10)
+        engine.dispatch(Intent.PRIMARY)  # R4 20
+        at_twenty = engine.snapshot()
+        self.assertEqual(at_twenty.depth_text, "20 fsw")
+        self.assertEqual(at_twenty.remaining_text, "Stop: 32:40 left")
+
+    def test_oxygen_delay_credit_caps_at_thirty_minutes_and_resets_o2_segment_after_air_interrupt(self) -> None:
+        current = {"now": datetime(2026, 4, 12, 12, 0, 0)}
+        engine = Engine(now_provider=lambda: current["now"])
+        engine.set_depth_text("190")
+        engine.dispatch(Intent.MODE)
+        engine.dispatch(Intent.MODE)
+        engine.dispatch(Intent.PRIMARY)  # LS
+        current["now"] += timedelta(minutes=3)
+        engine.dispatch(Intent.PRIMARY)  # RB
+        current["now"] += timedelta(minutes=32)
+        engine.dispatch(Intent.PRIMARY)  # LB
+        current["now"] += timedelta(minutes=4)
+        engine.dispatch(Intent.PRIMARY)  # R1 70
+        current["now"] += timedelta(minutes=4)
+        engine.dispatch(Intent.PRIMARY)  # L1
+        current["now"] += timedelta(seconds=20)
+        engine.dispatch(Intent.PRIMARY)  # R2 60
+        current["now"] += timedelta(minutes=5)
+        engine.dispatch(Intent.PRIMARY)  # L2
+        current["now"] += timedelta(seconds=20)
+        engine.dispatch(Intent.PRIMARY)  # R3 50
+        current["now"] += timedelta(minutes=6)
+        engine.dispatch(Intent.PRIMARY)  # L3
+        current["now"] += timedelta(seconds=20)
+        engine.dispatch(Intent.PRIMARY)  # R4 40
+        current["now"] += timedelta(minutes=8)
+        engine.dispatch(Intent.PRIMARY)  # L4
+        current["now"] += timedelta(seconds=20)
+        engine.dispatch(Intent.PRIMARY)  # R5 30
+        engine.dispatch(Intent.SECONDARY)  # On O2
+        current["now"] += timedelta(minutes=13)
+        engine.dispatch(Intent.PRIMARY)  # L5
+        engine.dispatch(Intent.SECONDARY)  # delay start
+        current["now"] += timedelta(minutes=20)
+        engine.dispatch(Intent.SECONDARY)  # delay end
+
+        after_delay = engine.snapshot()
+        self.assertEqual(after_delay.summary_text, "Next: 20 fsw for 28m")
+        self.assertIsNotNone(engine.state.dive.last_delay_recompute)
+        self.assertEqual(engine.state.dive.last_delay_recompute.outcome, "o2_delay_credit")
+        self.assertEqual(engine.state.dive.last_delay_recompute.credited_o2_min, 17)
+        self.assertEqual(engine.state.dive.last_delay_recompute.air_interruption_min, 3)
+        self.assertTrue(any("O2 delay interruption (3m air) ignored for O2 credit" == line for line in engine.state.ui_log))
+
+        current["now"] += timedelta(seconds=20)
+        engine.dispatch(Intent.PRIMARY)  # R6 20
+        at_twenty = engine.snapshot()
+        self.assertEqual(at_twenty.depth_text, "20 fsw")
+        self.assertEqual(at_twenty.summary_text, "Next: Surface")
+        self.assertEqual(at_twenty.secondary_button_label, "")
+        self.assertFalse(at_twenty.secondary_button_enabled)
 
     def test_final_twenty_o2_stop_carries_continuous_o2_air_break_timer(self) -> None:
         current = {"now": datetime(2026, 4, 12, 12, 0, 0)}

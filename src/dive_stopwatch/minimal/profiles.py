@@ -45,6 +45,8 @@ class DelayResult:
     delay_min: int
     schedule_changed: bool
     outcome: str
+    credited_o2_min: int = 0
+    air_interruption_min: int = 0
 
 
 @dataclass(frozen=True)
@@ -178,6 +180,62 @@ def apply_between_stop_delay(
         delay_min=delay_min,
         schedule_changed=changed,
         outcome="recompute" if changed else "ignore_delay",
+    )
+
+
+def apply_oxygen_travel_delay(
+    profile: DiveProfile,
+    from_stop_index: int,
+    delay_elapsed_sec: int,
+    o2_time_before_delay_sec: int,
+) -> DelayResult:
+    if delay_elapsed_sec <= 0:
+        return DelayResult(profile=profile, delay_min=0, schedule_changed=False, outcome="ignore_delay")
+
+    current_stop = stop_by_index(profile, from_stop_index)
+    next_stop = next_stop_after(profile, from_stop_index)
+    if (
+        current_stop is None
+        or next_stop is None
+        or current_stop.gas != "o2"
+        or next_stop.gas != "o2"
+        or current_stop.depth_fsw != 30
+        or next_stop.depth_fsw != 20
+    ):
+        return DelayResult(profile=profile, delay_min=0, schedule_changed=False, outcome="ignore_delay")
+
+    delay_min = _ceil_minutes(delay_elapsed_sec)
+    qualifying_o2_sec = min(delay_elapsed_sec, max((30 * 60) - max(o2_time_before_delay_sec, 0), 0))
+    credited_o2_min = min(_ceil_minutes(qualifying_o2_sec), next_stop.duration_min) if qualifying_o2_sec > 0 else 0
+    air_interruption_min = max(delay_min - credited_o2_min, 0)
+
+    if credited_o2_min <= 0:
+        return DelayResult(
+            profile=profile,
+            delay_min=delay_min,
+            schedule_changed=False,
+            outcome="o2_delay_credit",
+            credited_o2_min=0,
+            air_interruption_min=air_interruption_min,
+        )
+
+    adjusted_stops = []
+    for stop in profile.stops:
+        if stop.index != next_stop.index:
+            adjusted_stops.append(stop)
+            continue
+        remaining_min = stop.duration_min - credited_o2_min
+        if remaining_min > 0:
+            adjusted_stops.append(replace(stop, duration_min=remaining_min))
+
+    adjusted = replace(profile, stops=_reindex_stops(adjusted_stops))
+    return DelayResult(
+        profile=adjusted,
+        delay_min=delay_min,
+        schedule_changed=_schedule_changed(profile, adjusted),
+        outcome="o2_delay_credit",
+        credited_o2_min=credited_o2_min,
+        air_interruption_min=air_interruption_min,
     )
 
 

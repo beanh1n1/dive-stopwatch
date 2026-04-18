@@ -103,14 +103,16 @@ Manual coverage:
 App status:
 - partially implemented
 - continuous O2 exposure and air-break timing are modeled
-- but the runtime does not yet implement a distinct oxygen-delay correction path
-  that subtracts qualifying `30 -> 20` O2 delay from the `20 fsw` stop as its own
-  explicit rule
+- the runtime now implements a distinct `30 -> 20` oxygen-delay correction path
+  that subtracts qualifying O2 delay time from the subsequent `20 fsw` stop and
+  resets the O2 segment when the delay exceeds the remaining continuous-O2 limit
+- but the distinct `20 fsw` departure-delay branch described in the chapter is
+  still not modeled as its own explicit rule path
 
 Why this matters:
 - this is not a cosmetic gap; it is one of the remaining manual-backed branches
-  that still needs explicit implementation rather than inference from the generic
-  travel/delay model
+  where the `20 fsw` departure behavior still needs explicit implementation rather
+  than inference from the generic travel/delay model
 
 ## Operational Notes
 
