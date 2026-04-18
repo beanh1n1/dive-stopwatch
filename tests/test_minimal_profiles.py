@@ -1,7 +1,7 @@
 from datetime import datetime, timedelta
 import unittest
 
-from dive_stopwatch.minimal.profiles import DecoMode, apply_between_stop_delay, apply_first_stop_delay, apply_oxygen_travel_delay, build_profile, first_stop_depth, next_stop_after, stop_by_index
+from dive_stopwatch.minimal.profiles import DecoMode, apply_between_stop_delay, apply_first_stop_delay, apply_oxygen_surface_delay, apply_oxygen_travel_delay, build_profile, first_stop_depth, next_stop_after, stop_by_index
 
 
 class MinimalTablesTests(unittest.TestCase):
@@ -198,6 +198,40 @@ class MinimalTablesTests(unittest.TestCase):
         self.assertEqual(result.air_interruption_min, 3)
         self.assertTrue(result.schedule_changed)
         self.assertEqual([(stop.depth_fsw, stop.duration_min) for stop in result.profile.stops], [(70, 4), (60, 5), (50, 6), (40, 8), (30, 13), (20, 28)])
+
+    def test_oxygen_surface_delay_is_ignored_when_it_stays_within_continuous_limit(self) -> None:
+        profile = build_profile(DecoMode.AIR_O2, 145, 40)
+
+        result = apply_oxygen_surface_delay(
+            profile=profile,
+            from_stop_index=4,
+            delay_elapsed_sec=10 * 60,
+            o2_time_before_delay_sec=12 * 60,
+        )
+
+        self.assertEqual(result.outcome, "o2_surface_delay")
+        self.assertEqual(result.delay_min, 10)
+        self.assertEqual(result.credited_o2_min, 10)
+        self.assertEqual(result.air_interruption_min, 0)
+        self.assertFalse(result.schedule_changed)
+        self.assertEqual(result.profile, profile)
+
+    def test_oxygen_surface_delay_tracks_air_interruption_after_thirty_minutes(self) -> None:
+        profile = build_profile(DecoMode.AIR_O2, 145, 40)
+
+        result = apply_oxygen_surface_delay(
+            profile=profile,
+            from_stop_index=4,
+            delay_elapsed_sec=25 * 60,
+            o2_time_before_delay_sec=12 * 60,
+        )
+
+        self.assertEqual(result.outcome, "o2_surface_delay")
+        self.assertEqual(result.delay_min, 25)
+        self.assertEqual(result.credited_o2_min, 18)
+        self.assertEqual(result.air_interruption_min, 7)
+        self.assertFalse(result.schedule_changed)
+        self.assertEqual(result.profile, profile)
 
 
 if __name__ == "__main__":

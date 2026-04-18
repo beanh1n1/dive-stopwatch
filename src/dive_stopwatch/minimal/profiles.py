@@ -239,6 +239,39 @@ def apply_oxygen_travel_delay(
     )
 
 
+def apply_oxygen_surface_delay(
+    profile: DiveProfile,
+    from_stop_index: int,
+    delay_elapsed_sec: int,
+    o2_time_before_delay_sec: int,
+) -> DelayResult:
+    if delay_elapsed_sec <= 0:
+        return DelayResult(profile=profile, delay_min=0, schedule_changed=False, outcome="ignore_delay")
+
+    current_stop = stop_by_index(profile, from_stop_index)
+    next_stop = next_stop_after(profile, from_stop_index)
+    if (
+        current_stop is None
+        or current_stop.gas != "o2"
+        or current_stop.depth_fsw != 20
+        or next_stop is not None
+    ):
+        return DelayResult(profile=profile, delay_min=0, schedule_changed=False, outcome="ignore_delay")
+
+    delay_min = _ceil_minutes(delay_elapsed_sec)
+    qualifying_o2_sec = min(delay_elapsed_sec, max((30 * 60) - max(o2_time_before_delay_sec, 0), 0))
+    o2_delay_min = _ceil_minutes(qualifying_o2_sec) if qualifying_o2_sec > 0 else 0
+    air_interruption_min = max(delay_min - o2_delay_min, 0)
+    return DelayResult(
+        profile=profile,
+        delay_min=delay_min,
+        schedule_changed=False,
+        outcome="o2_surface_delay",
+        credited_o2_min=o2_delay_min,
+        air_interruption_min=air_interruption_min,
+    )
+
+
 def first_stop_depth(profile: DiveProfile) -> int | None:
     if not profile.stops:
         return None

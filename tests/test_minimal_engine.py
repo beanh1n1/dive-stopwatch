@@ -6,6 +6,32 @@ from dive_stopwatch.minimal.profiles import DecoMode
 
 
 class MinimalEngineTests(unittest.TestCase):
+    def _reach_final_twenty_departure_point(self, engine: Engine, current: dict[str, datetime]) -> None:
+        engine.set_depth_text("145")
+        engine.dispatch(Intent.MODE)
+        engine.dispatch(Intent.MODE)
+        engine.dispatch(Intent.PRIMARY)  # LS
+        current["now"] += timedelta(minutes=3)
+        engine.dispatch(Intent.PRIMARY)  # RB
+        current["now"] += timedelta(minutes=37)
+        engine.dispatch(Intent.PRIMARY)  # LB
+        current["now"] += timedelta(minutes=3)
+        engine.dispatch(Intent.PRIMARY)  # R1 50
+        engine.dispatch(Intent.PRIMARY)  # L1
+        current["now"] += timedelta(minutes=2)
+        engine.dispatch(Intent.PRIMARY)  # R2 40
+        engine.dispatch(Intent.PRIMARY)  # L2
+        current["now"] += timedelta(minutes=6)
+        engine.dispatch(Intent.PRIMARY)  # R3 30
+        engine.dispatch(Intent.SECONDARY)  # On O2
+        current["now"] += timedelta(minutes=7)
+        engine.dispatch(Intent.PRIMARY)  # L3
+        current["now"] += timedelta(seconds=20)
+        engine.dispatch(Intent.PRIMARY)  # R4 20
+        current["now"] += timedelta(minutes=34, seconds=40)
+        self.assertEqual(engine.snapshot().summary_text, "Next: Surface")
+        engine.dispatch(Intent.PRIMARY)  # L4
+
     def test_stopwatch_start_stop_and_reset(self) -> None:
         current = {"now": datetime(2026, 4, 12, 12, 0, 0)}
         engine = Engine(now_provider=lambda: current["now"])
@@ -1209,6 +1235,41 @@ class MinimalEngineTests(unittest.TestCase):
         self.assertEqual(at_twenty.summary_text, "Next: Surface")
         self.assertEqual(at_twenty.secondary_button_label, "")
         self.assertFalse(at_twenty.secondary_button_enabled)
+
+    def test_oxygen_surface_departure_delay_after_final_o2_period_shifts_to_air_while_waiting(self) -> None:
+        current = {"now": datetime(2026, 4, 12, 12, 0, 0)}
+        engine = Engine(now_provider=lambda: current["now"])
+        self._reach_final_twenty_departure_point(engine, current)
+
+        current["now"] += timedelta(seconds=10)
+        engine.dispatch(Intent.SECONDARY)  # delay start
+        current["now"] += timedelta(minutes=1)
+        while_delayed = engine.snapshot()
+        self.assertEqual(while_delayed.status_text, "TRAVELING")
+        self.assertEqual(while_delayed.status_value_text, "Traveling")
+        self.assertEqual(while_delayed.primary_value_kind, "default")
+
+    def test_oxygen_surface_departure_delay_logs_air_only_interrupt_and_resets_o2_on_end(self) -> None:
+        current = {"now": datetime(2026, 4, 12, 12, 0, 0)}
+        engine = Engine(now_provider=lambda: current["now"])
+        self._reach_final_twenty_departure_point(engine, current)
+
+        current["now"] += timedelta(seconds=10)
+        engine.dispatch(Intent.SECONDARY)  # delay start
+        current["now"] += timedelta(minutes=5)
+        engine.dispatch(Intent.SECONDARY)  # delay end
+
+        after_delay = engine.snapshot()
+        self.assertEqual(after_delay.status_value_text, "On O2/ Traveling")
+        self.assertEqual(after_delay.summary_text, "Next: Surface")
+        self.assertIsNotNone(engine.state.dive.last_delay_recompute)
+        self.assertEqual(engine.state.dive.last_delay_recompute.outcome, "o2_surface_delay")
+        self.assertEqual(engine.state.dive.last_delay_recompute.delay_min, 5)
+        self.assertEqual(engine.state.dive.last_delay_recompute.credited_o2_min, 0)
+        self.assertEqual(engine.state.dive.last_delay_recompute.air_interruption_min, 5)
+        self.assertEqual(engine.state.ui_log[-1], "20 fsw O2 departure delay interruption (5m air) ignored")
+        self.assertEqual(engine.state.ui_log[-2], "20 fsw departure delay ignored (+5m); 5m on air before surface")
+        self.assertEqual(engine.state.dive.oxygen.segment_started_at, current["now"])
 
     def test_final_twenty_o2_stop_carries_continuous_o2_air_break_timer(self) -> None:
         current = {"now": datetime(2026, 4, 12, 12, 0, 0)}

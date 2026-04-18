@@ -91,28 +91,27 @@ App status:
 - not implemented as active workflow
 - repetitive group display exists, but repetitive-dive planning logic is out of scope
 
-## Confirmed Partial-Implementation Differences
+## Confirmed Manual-Backed Alignments Added During Hardening
 
-### Oxygen-delay correction is only partially modeled
+### Oxygen-delay correction is now explicitly modeled
 Manual coverage:
 - `9-11.4` and `9-8.2.2` describe special handling for delays leaving the `30 fsw`
-  oxygen stop or during O2 travel from `30` to `20`, including subtracting
-  qualifying O2 delay time from the subsequent `20 fsw` obligation and managing
-  continuous-O2 exposure limits during the interruption.
+  oxygen stop, delays during O2 travel from `30` to `20`, and delays leaving the
+  `20 fsw` oxygen stop.
 
 App status:
-- partially implemented
-- continuous O2 exposure and air-break timing are modeled
-- the runtime now implements a distinct `30 -> 20` oxygen-delay correction path
-  that subtracts qualifying O2 delay time from the subsequent `20 fsw` stop and
-  resets the O2 segment when the delay exceeds the remaining continuous-O2 limit
-- but the distinct `20 fsw` departure-delay branch described in the chapter is
-  still not modeled as its own explicit rule path
+- implemented for the current in-water runtime
+- the runtime now has a distinct `30 -> 20` oxygen-delay correction path that
+  subtracts qualifying O2 delay time from the subsequent `20 fsw` stop and resets
+  the O2 segment when the delay exceeds the remaining continuous-O2 limit
+- the runtime also has a distinct `20 fsw` departure-delay path that ignores the
+  schedule change, shifts the diver to air once the continuous-O2 limit is reached,
+  and resumes surface travel on oxygen when departure becomes possible
 
 Why this matters:
-- this is not a cosmetic gap; it is one of the remaining manual-backed branches
-  where the `20 fsw` departure behavior still needs explicit implementation rather
-  than inference from the generic travel/delay model
+- this was a real protocol branch that earlier test waves had missed
+- it is now encoded as an explicit rule path instead of being inferred from the
+  generic travel/delay model
 
 ## Operational Notes
 

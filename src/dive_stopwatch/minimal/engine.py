@@ -10,6 +10,7 @@ from .profiles import (
     DelayResult,
     DiveProfile,
     ProfileStop,
+    apply_oxygen_surface_delay,
     apply_oxygen_travel_delay,
     apply_between_stop_delay,
     apply_first_stop_delay,
@@ -344,6 +345,7 @@ def _dive_view(state: EngineState, now: datetime) -> DiveView:
     continuous_o2_remaining = _continuous_o2_remaining(profile, state.dive.current_stop_index, current_stop, stop_remaining)
     air_break_required = _air_break_required(current_stop, continuous_o2_remaining)
     o2_exposure_anchor = state.dive.oxygen.segment_started_at if at_o2_stop else None
+    traveling_on_air_due_to_delay = _traveling_on_air_due_to_o2_delay(state, now, travel_from_stop, travel_to_stop)
     waiting_at_o2_stop = at_o2_stop and awaiting_o2
     on_o2_stop = at_o2_stop and state.dive.oxygen.segment_started_at is not None and active_break is None
     traveling_on_o2 = (
@@ -352,6 +354,7 @@ def _dive_view(state: EngineState, now: datetime) -> DiveView:
         and travel_from_stop.gas == "o2"
         and state.dive.oxygen.segment_started_at is not None
         and active_break is None
+        and not traveling_on_air_due_to_delay
     )
     traveling_to_o2 = (
         state.dive.phase is DivePhase.TRAVEL
@@ -425,6 +428,29 @@ def _air_break_required(current_stop: ProfileStop | None, continuous_o2_remainin
     if continuous_o2_remaining is not None and continuous_o2_remaining <= FINAL_O2_AIR_BREAK_CUTOFF_SEC:
         return False
     return True
+
+
+def _traveling_on_air_due_to_o2_delay(
+    state: EngineState,
+    now: datetime,
+    travel_from_stop: ProfileStop | None,
+    travel_to_stop: ProfileStop | None,
+) -> bool:
+    if (
+        state.dive.phase is not DivePhase.TRAVEL
+        or state.dive.active_delay is None
+        or state.dive.oxygen.segment_started_at is None
+        or travel_from_stop is None
+        or travel_from_stop.gas != "o2"
+    ):
+        return False
+    if travel_from_stop.depth_fsw == 30 and travel_to_stop is not None and travel_to_stop.gas == "o2" and travel_to_stop.depth_fsw == 20:
+        limit_sec = 30 * 60
+    elif travel_from_stop.depth_fsw == 20 and travel_to_stop is None:
+        limit_sec = 30 * 60
+    else:
+        return False
+    return max((now - state.dive.oxygen.segment_started_at).total_seconds(), 0.0) >= limit_sec
 
 def parse_depth_input(text: str) -> int | None:
     raw = text.strip()
@@ -603,9 +629,37 @@ def _apply_delay_result(state: EngineState, now: datetime, delay: DelayState) ->
         )
         return _merge_delay_profile(state, now, profile, result)
 
-    next_stop = next_stop_after(profile, delay.from_stop_index)
     current_stop = stop_by_index(profile, delay.from_stop_index)
-    if next_stop is None or current_stop is None:
+    next_stop = next_stop_after(profile, delay.from_stop_index)
+    if current_stop is None:
+        return state
+
+    if (
+        current_stop.gas == "o2"
+        and current_stop.depth_fsw == 20
+        and next_stop is None
+        and state.dive.oxygen.segment_started_at is not None
+    ):
+        o2_time_before_delay_sec = max(int((delay.started_at - state.dive.oxygen.segment_started_at).total_seconds()), 0)
+        result = apply_oxygen_surface_delay(
+            profile=profile,
+            from_stop_index=delay.from_stop_index,
+            delay_elapsed_sec=delay_elapsed_sec,
+            o2_time_before_delay_sec=o2_time_before_delay_sec,
+        )
+        merged = _merge_delay_profile(state, now, profile, result)
+        if result.air_interruption_min > 0:
+            merged = replace(
+                merged,
+                dive=replace(
+                    merged.dive,
+                    oxygen=replace(merged.dive.oxygen, segment_started_at=now, active_air_break=None),
+                ),
+                ui_log=merged.ui_log + (f"20 fsw O2 departure delay interruption ({result.air_interruption_min}m air) ignored",),
+            )
+        return merged
+
+    if next_stop is None:
         return state
 
     if (
@@ -631,7 +685,7 @@ def _apply_delay_result(state: EngineState, now: datetime, delay: DelayState) ->
                     oxygen=replace(merged.dive.oxygen, segment_started_at=now, active_air_break=None),
                 ),
                 ui_log=merged.ui_log + (f"O2 delay interruption ({result.air_interruption_min}m air) ignored for O2 credit",),
-            )
+        )
         return merged
 
     planned_elapsed_sec = int(abs(current_stop.depth_fsw - next_stop.depth_fsw) * 2)
@@ -690,6 +744,11 @@ def _delay_recompute_log_line(recompute: DelayRecomputeState) -> str:
         )
         if recompute.air_interruption_min > 0:
             return f"{base}; {recompute.air_interruption_min}m on air ignored"
+        return base
+    if recompute.outcome == "o2_surface_delay":
+        base = f"20 fsw departure delay ignored (+{recompute.delay_min}m)"
+        if recompute.air_interruption_min > 0:
+            return f"{base}; {recompute.air_interruption_min}m on air before surface"
         return base
     if recompute.outcome == "ignore_delay":
         if recompute.delay_min > 0:
