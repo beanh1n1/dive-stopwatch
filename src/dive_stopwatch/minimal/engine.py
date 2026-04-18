@@ -338,7 +338,8 @@ def _dive_view(state: EngineState, now: datetime) -> DiveView:
     else:
         stop_anchor = arrival.timestamp
     stop_remaining = None if current_stop is None or stop_anchor is None else (current_stop.duration_min * 60) - max((now - stop_anchor).total_seconds(), 0.0)
-    air_break_required = _air_break_required(current_stop, stop_remaining)
+    continuous_o2_remaining = _continuous_o2_remaining(profile, state.dive.current_stop_index, current_stop, stop_remaining)
+    air_break_required = _air_break_required(current_stop, continuous_o2_remaining)
     o2_exposure_anchor = state.dive.oxygen.segment_started_at if at_o2_stop else None
     waiting_at_o2_stop = at_o2_stop and awaiting_o2
     on_o2_stop = at_o2_stop and state.dive.oxygen.segment_started_at is not None and active_break is None
@@ -390,10 +391,35 @@ def _dive_view(state: EngineState, now: datetime) -> DiveView:
     )
 
 
-def _air_break_required(current_stop: ProfileStop | None, stop_remaining: float | None) -> bool:
+def _continuous_o2_remaining(
+    profile: DiveProfile | None,
+    current_stop_index: int | None,
+    current_stop: ProfileStop | None,
+    stop_remaining: float | None,
+) -> float | None:
+    if (
+        profile is None
+        or current_stop is None
+        or current_stop_index is None
+        or current_stop.gas != "o2"
+        or stop_remaining is None
+    ):
+        return None
+    remaining = max(stop_remaining, 0.0)
+    next_index = current_stop_index + 1
+    while True:
+        next_stop = stop_by_index(profile, next_index)
+        if next_stop is None or next_stop.gas != "o2":
+            break
+        remaining += next_stop.duration_min * 60
+        next_index += 1
+    return remaining
+
+
+def _air_break_required(current_stop: ProfileStop | None, continuous_o2_remaining: float | None) -> bool:
     if current_stop is None or current_stop.gas != "o2":
         return False
-    if current_stop.depth_fsw == 20 and stop_remaining is not None and stop_remaining <= FINAL_O2_AIR_BREAK_CUTOFF_SEC:
+    if continuous_o2_remaining is not None and continuous_o2_remaining <= FINAL_O2_AIR_BREAK_CUTOFF_SEC:
         return False
     return True
 

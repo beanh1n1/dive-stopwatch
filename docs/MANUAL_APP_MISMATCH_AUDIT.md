@@ -91,6 +91,27 @@ App status:
 - not implemented as active workflow
 - repetitive group display exists, but repetitive-dive planning logic is out of scope
 
+## Confirmed Partial-Implementation Differences
+
+### Oxygen-delay correction is only partially modeled
+Manual coverage:
+- `9-11.4` and `9-8.2.2` describe special handling for delays leaving the `30 fsw`
+  oxygen stop or during O2 travel from `30` to `20`, including subtracting
+  qualifying O2 delay time from the subsequent `20 fsw` obligation and managing
+  continuous-O2 exposure limits during the interruption.
+
+App status:
+- partially implemented
+- continuous O2 exposure and air-break timing are modeled
+- but the runtime does not yet implement a distinct oxygen-delay correction path
+  that subtracts qualifying `30 -> 20` O2 delay from the `20 fsw` stop as its own
+  explicit rule
+
+Why this matters:
+- this is not a cosmetic gap; it is one of the remaining manual-backed branches
+  that still needs explicit implementation rather than inference from the generic
+  travel/delay model
+
 ## Operational Notes
 
 ### Operator-confirmed model remains intentional

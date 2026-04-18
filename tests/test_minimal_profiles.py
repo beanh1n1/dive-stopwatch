@@ -117,7 +117,7 @@ class MinimalTablesTests(unittest.TestCase):
         )
 
         self.assertEqual(result.outcome, "ignore_delay")
-        self.assertEqual(result.delay_min, 0)
+        self.assertEqual(result.delay_min, 4)
         self.assertFalse(result.schedule_changed)
 
     def test_between_stop_delay_exactly_60s_is_ignored_at_depth_gt_50(self) -> None:
@@ -145,7 +145,7 @@ class MinimalTablesTests(unittest.TestCase):
         )
 
         self.assertEqual(result.outcome, "ignore_delay")
-        self.assertEqual(result.delay_min, 0)
+        self.assertEqual(result.delay_min, 4)
         self.assertFalse(result.schedule_changed)
 
     def test_between_stop_delay_recomputes_for_deep_delay(self) -> None:

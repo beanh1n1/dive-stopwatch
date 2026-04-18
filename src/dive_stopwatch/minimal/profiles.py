@@ -161,10 +161,12 @@ def apply_between_stop_delay(
 ) -> DelayResult:
 
     delay_seconds = actual_elapsed_sec - planned_elapsed_sec
-    if delay_seconds <= 60 or delay_depth_fsw <= 50:
+    if delay_seconds <= 60:
         return DelayResult(profile=profile, delay_min=0, schedule_changed=False, outcome="ignore_delay")
-
     delay_min = _ceil_minutes(delay_seconds)
+    if delay_depth_fsw <= 50:
+        return DelayResult(profile=profile, delay_min=delay_min, schedule_changed=False, outcome="ignore_delay")
+
     recomputed = build_profile(profile.mode, profile.input_depth_fsw, profile.table_bottom_time_min + delay_min)
     adjusted_stops = tuple(stop for stop in recomputed.stops if stop.depth_fsw <= delay_depth_fsw)
     adjusted = replace(recomputed, stops=_reindex_stops(adjusted_stops))
