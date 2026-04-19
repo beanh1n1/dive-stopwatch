@@ -64,8 +64,8 @@ class ActiveParityP1Tests(unittest.TestCase):
 
         snap = engine.snapshot()
         self.assertEqual(snap.depth_text, "50 fsw")
-        self.assertIn("Stop:", snap.remaining_text)
-        self.assertIn("left", snap.remaining_text)
+        self.assertEqual(snap.remaining_text, "")
+        self.assertIn("left", snap.depth_timer_text)
 
     def test_detail_line_shows_hold_and_delay(self) -> None:
         engine, current = self._build_engine(datetime(2026, 3, 30, 9, 0, 0))

@@ -14,6 +14,16 @@ class DecoMode(str, Enum):
     AIR_O2 = "AIR/O2"
 
 
+class DelayOutcome(str, Enum):
+    IGNORE_DELAY = "ignore_delay"
+    RECOMPUTE = "recompute"
+    ADD_TO_FIRST_STOP = "add_to_first_stop"
+    O2_DELAY_CREDIT = "o2_delay_credit"
+    O2_SURFACE_DELAY = "o2_surface_delay"
+    EARLY_ARRIVAL = "early_arrival"
+    NO_DECOMPRESSION = "no_decompression"
+
+
 GasType = Literal["air", "o2", "surface"]
 
 
@@ -44,9 +54,18 @@ class DelayResult:
     profile: DiveProfile
     delay_min: int
     schedule_changed: bool
-    outcome: str
+    outcome: DelayOutcome
     credited_o2_min: int = 0
     air_interruption_min: int = 0
+
+
+@dataclass(frozen=True)
+class O2ToAirConversionResult:
+    profile: DiveProfile
+    remaining_o2_min: int
+    converted_air_min: int
+    air_to_o2_ratio: float
+    source_stop_depth_fsw: int
 
 
 @dataclass(frozen=True)
@@ -87,6 +106,68 @@ _ROWS_BY_MODE: dict[DecoMode, dict[int, dict[int, TableRow]]] = {
 }
 _LOADED = False
 
+
+def apply_delay(
+    profile: DiveProfile,
+    *,
+    from_stop_index: int | None,
+    delay_elapsed_sec: int,
+    delay_depth_fsw: int,
+    o2_time_before_delay_sec: int | None = None,
+) -> DelayResult:
+    if from_stop_index is None:
+        planned_time = profile.time_to_first_stop_sec
+        if planned_time is None:
+            return DelayResult(profile=profile, delay_min=0, schedule_changed=False, outcome=DelayOutcome.IGNORE_DELAY)
+        return apply_first_stop_delay(
+            profile=profile,
+            actual_time_to_first_stop_sec=planned_time + delay_elapsed_sec,
+            delay_depth_fsw=delay_depth_fsw,
+        )
+
+    current_stop = stop_by_index(profile, from_stop_index)
+    if current_stop is None:
+        return DelayResult(profile=profile, delay_min=0, schedule_changed=False, outcome=DelayOutcome.IGNORE_DELAY)
+
+    next_stop = next_stop_after(profile, from_stop_index)
+    if (
+        current_stop.gas == "o2"
+        and current_stop.depth_fsw == 20
+        and next_stop is None
+        and o2_time_before_delay_sec is not None
+    ):
+        return apply_oxygen_surface_delay(
+            profile=profile,
+            from_stop_index=from_stop_index,
+            delay_elapsed_sec=delay_elapsed_sec,
+            o2_time_before_delay_sec=o2_time_before_delay_sec,
+        )
+
+    if next_stop is None:
+        return DelayResult(profile=profile, delay_min=0, schedule_changed=False, outcome=DelayOutcome.IGNORE_DELAY)
+
+    if (
+        current_stop.gas == "o2"
+        and next_stop.gas == "o2"
+        and current_stop.depth_fsw == 30
+        and next_stop.depth_fsw == 20
+        and o2_time_before_delay_sec is not None
+    ):
+        return apply_oxygen_travel_delay(
+            profile=profile,
+            from_stop_index=from_stop_index,
+            delay_elapsed_sec=delay_elapsed_sec,
+            o2_time_before_delay_sec=o2_time_before_delay_sec,
+        )
+
+    planned_elapsed_sec = int(abs(current_stop.depth_fsw - next_stop.depth_fsw) * 2)
+    return apply_between_stop_delay(
+        profile=profile,
+        actual_elapsed_sec=planned_elapsed_sec + delay_elapsed_sec,
+        planned_elapsed_sec=planned_elapsed_sec,
+        delay_depth_fsw=delay_depth_fsw,
+    )
+
 def build_profile(mode: DecoMode, depth_fsw: int, bottom_time_min: int) -> DiveProfile:
     if depth_fsw <= 0:
         raise ValueError("Depth must be positive.")
@@ -117,14 +198,14 @@ def apply_first_stop_delay(
 
     planned_time = profile.time_to_first_stop_sec
     if planned_time is None or profile.is_no_decompression:
-        return DelayResult(profile=profile, delay_min=0, schedule_changed=False, outcome="no_decompression")
+        return DelayResult(profile=profile, delay_min=0, schedule_changed=False, outcome=DelayOutcome.NO_DECOMPRESSION)
 
     if actual_time_to_first_stop_sec < planned_time:
-        return DelayResult(profile=profile, delay_min=0, schedule_changed=False, outcome="early_arrival")
+        return DelayResult(profile=profile, delay_min=0, schedule_changed=False, outcome=DelayOutcome.EARLY_ARRIVAL)
 
     delay_seconds = actual_time_to_first_stop_sec - planned_time
     if delay_seconds <= 60:
-        return DelayResult(profile=profile, delay_min=0, schedule_changed=False, outcome="ignore_delay")
+        return DelayResult(profile=profile, delay_min=0, schedule_changed=False, outcome=DelayOutcome.IGNORE_DELAY)
 
     delay_min = _ceil_minutes(delay_seconds)
     if delay_depth_fsw is not None and delay_depth_fsw <= 50:
@@ -132,7 +213,7 @@ def apply_first_stop_delay(
             profile,
             stops=tuple(replace(stop, duration_min=stop.duration_min + delay_min) if stop.index == 1 else stop for stop in profile.stops),
         ) if profile.stops else profile
-        return DelayResult(profile=updated, delay_min=delay_min, schedule_changed=True, outcome="add_to_first_stop")
+        return DelayResult(profile=updated, delay_min=delay_min, schedule_changed=True, outcome=DelayOutcome.ADD_TO_FIRST_STOP)
 
     recomputed = build_profile(profile.mode, profile.input_depth_fsw, profile.input_bottom_time_min + delay_min)
     current_depth_fsw = first_stop_depth(profile)
@@ -151,7 +232,7 @@ def apply_first_stop_delay(
         profile=adjusted,
         delay_min=delay_min,
         schedule_changed=_schedule_changed(profile, adjusted),
-        outcome="recompute",
+        outcome=DelayOutcome.RECOMPUTE,
     )
 
 
@@ -164,10 +245,10 @@ def apply_between_stop_delay(
 
     delay_seconds = actual_elapsed_sec - planned_elapsed_sec
     if delay_seconds <= 60:
-        return DelayResult(profile=profile, delay_min=0, schedule_changed=False, outcome="ignore_delay")
+        return DelayResult(profile=profile, delay_min=0, schedule_changed=False, outcome=DelayOutcome.IGNORE_DELAY)
     delay_min = _ceil_minutes(delay_seconds)
     if delay_depth_fsw <= 50:
-        return DelayResult(profile=profile, delay_min=delay_min, schedule_changed=False, outcome="ignore_delay")
+        return DelayResult(profile=profile, delay_min=delay_min, schedule_changed=False, outcome=DelayOutcome.IGNORE_DELAY)
 
     recomputed = build_profile(profile.mode, profile.input_depth_fsw, profile.table_bottom_time_min + delay_min)
     adjusted_stops = tuple(stop for stop in recomputed.stops if stop.depth_fsw <= delay_depth_fsw)
@@ -179,7 +260,7 @@ def apply_between_stop_delay(
         profile=adjusted,
         delay_min=delay_min,
         schedule_changed=changed,
-        outcome="recompute" if changed else "ignore_delay",
+        outcome=DelayOutcome.RECOMPUTE if changed else DelayOutcome.IGNORE_DELAY,
     )
 
 
@@ -190,7 +271,7 @@ def apply_oxygen_travel_delay(
     o2_time_before_delay_sec: int,
 ) -> DelayResult:
     if delay_elapsed_sec <= 0:
-        return DelayResult(profile=profile, delay_min=0, schedule_changed=False, outcome="ignore_delay")
+        return DelayResult(profile=profile, delay_min=0, schedule_changed=False, outcome=DelayOutcome.IGNORE_DELAY)
 
     current_stop = stop_by_index(profile, from_stop_index)
     next_stop = next_stop_after(profile, from_stop_index)
@@ -202,19 +283,20 @@ def apply_oxygen_travel_delay(
         or current_stop.depth_fsw != 30
         or next_stop.depth_fsw != 20
     ):
-        return DelayResult(profile=profile, delay_min=0, schedule_changed=False, outcome="ignore_delay")
+        return DelayResult(profile=profile, delay_min=0, schedule_changed=False, outcome=DelayOutcome.IGNORE_DELAY)
 
-    delay_min = _ceil_minutes(delay_elapsed_sec)
-    qualifying_o2_sec = min(delay_elapsed_sec, max((30 * 60) - max(o2_time_before_delay_sec, 0), 0))
-    credited_o2_min = min(_ceil_minutes(qualifying_o2_sec), next_stop.duration_min) if qualifying_o2_sec > 0 else 0
-    air_interruption_min = max(delay_min - credited_o2_min, 0)
+    delay_min, o2_delay_min, air_interruption_min = _o2_delay_minutes(
+        delay_elapsed_sec,
+        o2_time_before_delay_sec,
+    )
+    credited_o2_min = min(o2_delay_min, next_stop.duration_min)
 
     if credited_o2_min <= 0:
         return DelayResult(
             profile=profile,
             delay_min=delay_min,
             schedule_changed=False,
-            outcome="o2_delay_credit",
+            outcome=DelayOutcome.O2_DELAY_CREDIT,
             credited_o2_min=0,
             air_interruption_min=air_interruption_min,
         )
@@ -233,7 +315,7 @@ def apply_oxygen_travel_delay(
         profile=adjusted,
         delay_min=delay_min,
         schedule_changed=_schedule_changed(profile, adjusted),
-        outcome="o2_delay_credit",
+        outcome=DelayOutcome.O2_DELAY_CREDIT,
         credited_o2_min=credited_o2_min,
         air_interruption_min=air_interruption_min,
     )
@@ -246,7 +328,7 @@ def apply_oxygen_surface_delay(
     o2_time_before_delay_sec: int,
 ) -> DelayResult:
     if delay_elapsed_sec <= 0:
-        return DelayResult(profile=profile, delay_min=0, schedule_changed=False, outcome="ignore_delay")
+        return DelayResult(profile=profile, delay_min=0, schedule_changed=False, outcome=DelayOutcome.IGNORE_DELAY)
 
     current_stop = stop_by_index(profile, from_stop_index)
     next_stop = next_stop_after(profile, from_stop_index)
@@ -256,19 +338,53 @@ def apply_oxygen_surface_delay(
         or current_stop.depth_fsw != 20
         or next_stop is not None
     ):
-        return DelayResult(profile=profile, delay_min=0, schedule_changed=False, outcome="ignore_delay")
+        return DelayResult(profile=profile, delay_min=0, schedule_changed=False, outcome=DelayOutcome.IGNORE_DELAY)
 
-    delay_min = _ceil_minutes(delay_elapsed_sec)
-    qualifying_o2_sec = min(delay_elapsed_sec, max((30 * 60) - max(o2_time_before_delay_sec, 0), 0))
-    o2_delay_min = _ceil_minutes(qualifying_o2_sec) if qualifying_o2_sec > 0 else 0
-    air_interruption_min = max(delay_min - o2_delay_min, 0)
+    delay_min, o2_delay_min, air_interruption_min = _o2_delay_minutes(
+        delay_elapsed_sec,
+        o2_time_before_delay_sec,
+    )
     return DelayResult(
         profile=profile,
         delay_min=delay_min,
         schedule_changed=False,
-        outcome="o2_surface_delay",
+        outcome=DelayOutcome.O2_SURFACE_DELAY,
         credited_o2_min=o2_delay_min,
         air_interruption_min=air_interruption_min,
+    )
+
+
+def convert_remaining_o2_to_air(
+    profile: DiveProfile,
+    *,
+    current_stop_index: int,
+    remaining_o2_stop_sec: int,
+) -> O2ToAirConversionResult:
+    current_stop = stop_by_index(profile, current_stop_index)
+    if current_stop is None or current_stop.gas != "o2" or current_stop.depth_fsw not in {30, 20}:
+        raise ValueError("Current stop must be a 30 fsw or 20 fsw oxygen stop.")
+
+    remaining_o2_min = _ceil_minutes(max(remaining_o2_stop_sec, 0))
+    air_profile = build_profile(DecoMode.AIR, profile.input_depth_fsw, profile.input_bottom_time_min)
+    air_stop = stop_by_index(air_profile, current_stop_index)
+    if air_stop is None or air_stop.depth_fsw != current_stop.depth_fsw or air_stop.gas != "air":
+        raise ValueError("Matching AIR stop could not be located for conversion.")
+
+    if current_stop.duration_min <= 0:
+        raise ValueError("Current oxygen stop duration must be positive.")
+
+    air_to_o2_ratio = air_stop.duration_min / current_stop.duration_min
+    converted_air_min = max(math.ceil(remaining_o2_min * air_to_o2_ratio), 0)
+    converted_stop = replace(air_stop, duration_min=converted_air_min)
+    converted_stops = list(air_profile.stops)
+    converted_stops[current_stop_index - 1] = converted_stop
+    converted_profile = replace(air_profile, stops=tuple(converted_stops))
+    return O2ToAirConversionResult(
+        profile=converted_profile,
+        remaining_o2_min=remaining_o2_min,
+        converted_air_min=converted_air_min,
+        air_to_o2_ratio=air_to_o2_ratio,
+        source_stop_depth_fsw=current_stop.depth_fsw,
     )
 
 
@@ -373,6 +489,14 @@ def _parse_mmss(value: str | None) -> int | None:
 
 def _ceil_minutes(seconds: float) -> int:
     return max(math.ceil(seconds / 60.0), 0)
+
+
+def _o2_delay_minutes(delay_elapsed_sec: int, o2_time_before_delay_sec: int) -> tuple[int, int, int]:
+    delay_min = _ceil_minutes(delay_elapsed_sec)
+    qualifying_o2_sec = min(delay_elapsed_sec, max((30 * 60) - max(o2_time_before_delay_sec, 0), 0))
+    o2_delay_min = _ceil_minutes(qualifying_o2_sec) if qualifying_o2_sec > 0 else 0
+    air_interruption_min = max(delay_min - o2_delay_min, 0)
+    return delay_min, o2_delay_min, air_interruption_min
 
 
 def _rows_for_mode(mode: DecoMode) -> dict[int, dict[int, TableRow]]:

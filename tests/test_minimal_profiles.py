@@ -1,7 +1,7 @@
 from datetime import datetime, timedelta
 import unittest
 
-from dive_stopwatch.minimal.profiles import DecoMode, apply_between_stop_delay, apply_first_stop_delay, apply_oxygen_surface_delay, apply_oxygen_travel_delay, build_profile, first_stop_depth, next_stop_after, stop_by_index
+from dive_stopwatch.minimal.profiles import DecoMode, DelayOutcome, apply_between_stop_delay, apply_first_stop_delay, apply_oxygen_surface_delay, apply_oxygen_travel_delay, build_profile, convert_remaining_o2_to_air, first_stop_depth, next_stop_after, stop_by_index
 
 
 class MinimalTablesTests(unittest.TestCase):
@@ -56,7 +56,7 @@ class MinimalTablesTests(unittest.TestCase):
             delay_depth_fsw=40,
         )
 
-        self.assertEqual(result.outcome, "add_to_first_stop")
+        self.assertEqual(result.outcome, DelayOutcome.ADD_TO_FIRST_STOP)
         self.assertEqual(result.delay_min, 4)
         self.assertTrue(result.schedule_changed)
         self.assertEqual([(stop.depth_fsw, stop.duration_min) for stop in result.profile.stops], [(30, 23), (20, 116)])
@@ -72,7 +72,7 @@ class MinimalTablesTests(unittest.TestCase):
             delay_depth_fsw=60,
         )
 
-        self.assertEqual(result.outcome, "ignore_delay")
+        self.assertEqual(result.outcome, DelayOutcome.IGNORE_DELAY)
         self.assertEqual(result.delay_min, 0)
         self.assertFalse(result.schedule_changed)
 
@@ -85,7 +85,7 @@ class MinimalTablesTests(unittest.TestCase):
             delay_depth_fsw=60,
         )
 
-        self.assertEqual(result.outcome, "recompute")
+        self.assertEqual(result.outcome, DelayOutcome.RECOMPUTE)
         self.assertEqual(result.delay_min, 2)
         self.assertTrue(result.schedule_changed)
         self.assertEqual(result.profile.table_depth_fsw, 130)
@@ -101,7 +101,7 @@ class MinimalTablesTests(unittest.TestCase):
             delay_depth_fsw=50,
         )
 
-        self.assertEqual(result.outcome, "add_to_first_stop")
+        self.assertEqual(result.outcome, DelayOutcome.ADD_TO_FIRST_STOP)
         self.assertEqual(result.delay_min, 4)
         self.assertTrue(result.schedule_changed)
         self.assertEqual([(stop.depth_fsw, stop.duration_min) for stop in result.profile.stops], [(30, 23), (20, 116)])
@@ -116,7 +116,7 @@ class MinimalTablesTests(unittest.TestCase):
             delay_depth_fsw=40,
         )
 
-        self.assertEqual(result.outcome, "ignore_delay")
+        self.assertEqual(result.outcome, DelayOutcome.IGNORE_DELAY)
         self.assertEqual(result.delay_min, 4)
         self.assertFalse(result.schedule_changed)
 
@@ -130,7 +130,7 @@ class MinimalTablesTests(unittest.TestCase):
             delay_depth_fsw=60,
         )
 
-        self.assertEqual(result.outcome, "ignore_delay")
+        self.assertEqual(result.outcome, DelayOutcome.IGNORE_DELAY)
         self.assertEqual(result.delay_min, 0)
         self.assertFalse(result.schedule_changed)
 
@@ -144,7 +144,7 @@ class MinimalTablesTests(unittest.TestCase):
             delay_depth_fsw=50,
         )
 
-        self.assertEqual(result.outcome, "ignore_delay")
+        self.assertEqual(result.outcome, DelayOutcome.IGNORE_DELAY)
         self.assertEqual(result.delay_min, 4)
         self.assertFalse(result.schedule_changed)
 
@@ -158,7 +158,7 @@ class MinimalTablesTests(unittest.TestCase):
             delay_depth_fsw=70,
         )
 
-        self.assertEqual(result.outcome, "recompute")
+        self.assertEqual(result.outcome, DelayOutcome.RECOMPUTE)
         self.assertEqual(result.delay_min, 4)
         self.assertTrue(result.schedule_changed)
         self.assertEqual(result.profile.table_depth_fsw, 180)
@@ -175,7 +175,7 @@ class MinimalTablesTests(unittest.TestCase):
             o2_time_before_delay_sec=7 * 60,
         )
 
-        self.assertEqual(result.outcome, "o2_delay_credit")
+        self.assertEqual(result.outcome, DelayOutcome.O2_DELAY_CREDIT)
         self.assertEqual(result.delay_min, 2)
         self.assertEqual(result.credited_o2_min, 2)
         self.assertEqual(result.air_interruption_min, 0)
@@ -192,7 +192,7 @@ class MinimalTablesTests(unittest.TestCase):
             o2_time_before_delay_sec=13 * 60,
         )
 
-        self.assertEqual(result.outcome, "o2_delay_credit")
+        self.assertEqual(result.outcome, DelayOutcome.O2_DELAY_CREDIT)
         self.assertEqual(result.delay_min, 20)
         self.assertEqual(result.credited_o2_min, 17)
         self.assertEqual(result.air_interruption_min, 3)
@@ -209,7 +209,7 @@ class MinimalTablesTests(unittest.TestCase):
             o2_time_before_delay_sec=12 * 60,
         )
 
-        self.assertEqual(result.outcome, "o2_surface_delay")
+        self.assertEqual(result.outcome, DelayOutcome.O2_SURFACE_DELAY)
         self.assertEqual(result.delay_min, 10)
         self.assertEqual(result.credited_o2_min, 10)
         self.assertEqual(result.air_interruption_min, 0)
@@ -226,12 +226,54 @@ class MinimalTablesTests(unittest.TestCase):
             o2_time_before_delay_sec=12 * 60,
         )
 
-        self.assertEqual(result.outcome, "o2_surface_delay")
+        self.assertEqual(result.outcome, DelayOutcome.O2_SURFACE_DELAY)
         self.assertEqual(result.delay_min, 25)
         self.assertEqual(result.credited_o2_min, 18)
         self.assertEqual(result.air_interruption_min, 7)
         self.assertFalse(result.schedule_changed)
         self.assertEqual(result.profile, profile)
+
+    def test_convert_remaining_o2_at_thirty_to_air_uses_thirty_ratio_and_full_twenty_air_stop(self) -> None:
+        profile = build_profile(DecoMode.AIR_O2, 145, 40)
+
+        result = convert_remaining_o2_to_air(
+            profile=profile,
+            current_stop_index=3,
+            remaining_o2_stop_sec=4 * 60,
+        )
+
+        self.assertEqual(result.source_stop_depth_fsw, 30)
+        self.assertEqual(result.remaining_o2_min, 4)
+        self.assertEqual(result.air_to_o2_ratio, 2.0)
+        self.assertEqual(result.converted_air_min, 8)
+        self.assertEqual(result.profile.mode, DecoMode.AIR)
+        self.assertEqual([(stop.depth_fsw, stop.duration_min, stop.gas) for stop in result.profile.stops], [(50, 2, "air"), (40, 6, "air"), (30, 8, "air"), (20, 106, "air")])
+
+    def test_convert_remaining_o2_at_twenty_to_air_uses_twenty_ratio(self) -> None:
+        profile = build_profile(DecoMode.AIR_O2, 190, 35)
+
+        result = convert_remaining_o2_to_air(
+            profile=profile,
+            current_stop_index=6,
+            remaining_o2_stop_sec=9 * 60,
+        )
+
+        self.assertEqual(result.source_stop_depth_fsw, 20)
+        self.assertEqual(result.remaining_o2_min, 9)
+        self.assertAlmostEqual(result.air_to_o2_ratio, 165 / 45)
+        self.assertEqual(result.converted_air_min, 33)
+        self.assertEqual(result.profile.mode, DecoMode.AIR)
+        self.assertEqual([(stop.depth_fsw, stop.duration_min, stop.gas) for stop in result.profile.stops], [(70, 4, "air"), (60, 5, "air"), (50, 6, "air"), (40, 8, "air"), (30, 26, "air"), (20, 33, "air")])
+
+    def test_convert_remaining_o2_to_air_rejects_non_o2_stop(self) -> None:
+        profile = build_profile(DecoMode.AIR_O2, 145, 40)
+
+        with self.assertRaisesRegex(ValueError, "oxygen stop"):
+            convert_remaining_o2_to_air(
+                profile=profile,
+                current_stop_index=2,
+                remaining_o2_stop_sec=5 * 60,
+            )
 
 
 if __name__ == "__main__":

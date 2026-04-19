@@ -39,7 +39,8 @@ class DiveStopwatchApp:
 
         tk.Label(frame, text="CAISSON Active", font=("Helvetica", 16, "bold")).pack(anchor="w")
         tk.Label(frame, textvariable=self.mode_text, font=("Helvetica", 11)).pack(anchor="w")
-        tk.Label(frame, textvariable=self.test_time_text, font=("Helvetica", 11)).pack(anchor="w")
+        self.test_time_label = tk.Label(frame, textvariable=self.test_time_text, font=("Helvetica", 11))
+        self.test_time_label.pack(anchor="w")
         tk.Label(frame, textvariable=self.status_text, font=("Helvetica", 13, "bold")).pack(anchor="w", pady=(8, 0))
         tk.Label(frame, textvariable=self.primary_text, font=("Courier", 24, "bold")).pack(anchor="w", pady=(4, 0))
         tk.Label(frame, textvariable=self.depth_text, font=("Helvetica", 14)).pack(anchor="w", pady=(4, 0))
@@ -47,21 +48,21 @@ class DiveStopwatchApp:
         tk.Label(frame, textvariable=self.summary_text, font=("Helvetica", 12)).pack(anchor="w", pady=(8, 0))
         tk.Label(frame, textvariable=self.detail_text, font=("Helvetica", 11)).pack(anchor="w")
 
-        input_row = tk.Frame(frame)
-        input_row.pack(fill="x", pady=(12, 0))
-        tk.Label(input_row, text="Max Depth (fsw):").pack(side="left")
-        depth_entry = tk.Entry(input_row, textvariable=self.depth_input, width=8)
+        self.input_row = tk.Frame(frame)
+        self.input_row.pack(fill="x", pady=(12, 0))
+        tk.Label(self.input_row, text="Max Depth (fsw):").pack(side="left")
+        depth_entry = tk.Entry(self.input_row, textvariable=self.depth_input, width=8)
         depth_entry.pack(side="left", padx=(6, 8))
         depth_entry.bind("<Return>", self._set_depth, add="+")
-        tk.Button(input_row, text="Set", command=self._set_depth).pack(side="left")
+        tk.Button(self.input_row, text="Set", command=self._set_depth).pack(side="left")
 
-        test_time_row = tk.Frame(frame)
-        test_time_row.pack(fill="x", pady=(10, 0))
-        tk.Button(test_time_row, text="-1m", command=lambda: self._advance_test_time(-60)).pack(side="left", padx=(0, 6))
-        tk.Button(test_time_row, text="+1m", command=lambda: self._advance_test_time(60)).pack(side="left", padx=(0, 6))
-        tk.Button(test_time_row, text="+5m", command=lambda: self._advance_test_time(300)).pack(side="left", padx=(0, 6))
-        tk.Button(test_time_row, text="+30m", command=lambda: self._advance_test_time(1800)).pack(side="left", padx=(0, 6))
-        tk.Button(test_time_row, text="Live", command=self._reset_test_time).pack(side="left")
+        self.test_time_row = tk.Frame(frame)
+        self.test_time_row.pack(fill="x", pady=(10, 0))
+        tk.Button(self.test_time_row, text="-1m", command=lambda: self._advance_test_time(-60)).pack(side="left", padx=(0, 6))
+        tk.Button(self.test_time_row, text="+1m", command=lambda: self._advance_test_time(60)).pack(side="left", padx=(0, 6))
+        tk.Button(self.test_time_row, text="+5m", command=lambda: self._advance_test_time(300)).pack(side="left", padx=(0, 6))
+        tk.Button(self.test_time_row, text="+30m", command=lambda: self._advance_test_time(1800)).pack(side="left", padx=(0, 6))
+        tk.Button(self.test_time_row, text="Live", command=self._reset_test_time).pack(side="left")
 
         button_row = tk.Frame(frame)
         button_row.pack(fill="x", pady=(12, 0))
@@ -72,7 +73,8 @@ class DiveStopwatchApp:
         tk.Button(button_row, text="Mode", command=lambda: self._dispatch(Intent.MODE)).pack(side="left", padx=(0, 8))
         tk.Button(button_row, text="Reset", command=lambda: self._dispatch(Intent.RESET)).pack(side="left")
 
-        tk.Label(frame, text="Event Log", font=("Helvetica", 11, "bold")).pack(anchor="w", pady=(12, 0))
+        self.log_label = tk.Label(frame, text="Event Log", font=("Helvetica", 11, "bold"))
+        self.log_label.pack(anchor="w", pady=(12, 0))
         self.log_box = tk.Text(frame, height=10, width=60, state="disabled")
         self.log_box.pack(fill="both", expand=True)
 
@@ -123,8 +125,23 @@ class DiveStopwatchApp:
 
     def _render(self) -> None:
         snap = self.engine.snapshot()
+        is_stopwatch = snap.mode_text == "STOPWATCH"
         self.mode_text.set(f"Mode: {snap.mode_text}")
         self.test_time_text.set(self.engine.test_time_label())
+        if is_stopwatch:
+            if self.test_time_label.winfo_manager():
+                self.test_time_label.pack_forget()
+            if self.input_row.winfo_manager():
+                self.input_row.pack_forget()
+            if self.test_time_row.winfo_manager():
+                self.test_time_row.pack_forget()
+        else:
+            if not self.test_time_label.winfo_manager():
+                self.test_time_label.pack(anchor="w")
+            if not self.input_row.winfo_manager():
+                self.input_row.pack(fill="x", pady=(12, 0))
+            if not self.test_time_row.winfo_manager():
+                self.test_time_row.pack(fill="x", pady=(10, 0))
         self.status_text.set(f"Status: {snap.status_text}")
         self.primary_text.set(snap.primary_text)
         self.depth_text.set(snap.depth_text)
@@ -133,8 +150,9 @@ class DiveStopwatchApp:
         self.detail_text.set(snap.detail_text)
         self.primary_button.config(text=snap.primary_button_label, state="normal" if snap.primary_button_enabled else "disabled")
         self.secondary_button.config(text=snap.secondary_button_label, state="normal" if snap.secondary_button_enabled else "disabled")
+        self.log_label.config(text="Recall" if snap.mode_text == "STOPWATCH" else "Event Log")
 
-        log_lines = self.engine.state.ui_log[-30:]
+        log_lines = self.engine.recall_lines()
         if log_lines != self._last_log_rendered:
             self.log_box.config(state="normal")
             self.log_box.delete("1.0", "end")

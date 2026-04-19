@@ -73,6 +73,13 @@ class MobileDiveStopwatchApp:
             height=48,
             style=self._utility_button_style(),
         )
+        self.reset_button = ft.OutlinedButton(
+            "Reset",
+            on_click=lambda _: self._dispatch(Intent.RESET),
+            expand=True,
+            height=48,
+            style=self._utility_button_style(),
+        )
         self.recall_timer_text = ft.Text(size=20, weight=ft.FontWeight.W_700, visible=False, font_family=self.INSTRUMENT_FONT)
         self.status_label_text = ft.Text("Status:", size=18, weight=ft.FontWeight.W_600, font_family=self.INSTRUMENT_FONT)
         self.status_value_text = ft.Text(size=24, weight=ft.FontWeight.BOLD, font_family=self.INSTRUMENT_FONT)
@@ -102,9 +109,18 @@ class MobileDiveStopwatchApp:
             ],
         )
         self.remaining_text = ft.Text(size=16, weight=ft.FontWeight.W_500, font_family=self.INSTRUMENT_FONT)
-        self.summary_prefix_text = ft.Text(size=17, weight=ft.FontWeight.W_600, color=self.MUTED_TEXT_COLOR, font_family=self.INSTRUMENT_FONT)
-        self.summary_value_text = ft.Text(size=17, weight=ft.FontWeight.W_700, color=self.MUTED_TEXT_COLOR, font_family=self.INSTRUMENT_FONT)
-        self.summary_row = ft.Row(spacing=0, wrap=True, controls=[self.summary_prefix_text, self.summary_value_text])
+        self.summary_prefix_text = ft.Text(size=17, weight=ft.FontWeight.W_700, color=self.DEFAULT_TEXT_COLOR, font_family=self.INSTRUMENT_FONT)
+        self.summary_value_text = ft.Text(size=17, weight=ft.FontWeight.W_700, color=self.DEFAULT_TEXT_COLOR, font_family=self.INSTRUMENT_FONT)
+        self.summary_text = ft.Text(size=17, weight=ft.FontWeight.W_700, color=self.DEFAULT_TEXT_COLOR, font_family=self.INSTRUMENT_FONT)
+        self.summary_row = ft.Row(
+            spacing=0,
+            wrap=True,
+            controls=[
+                self.summary_prefix_text,
+                self.summary_value_text,
+                self.summary_text,
+            ],
+        )
         self.detail_text = ft.Text(size=14, italic=True, font_family=self.INSTRUMENT_FONT)
         self.test_time_text = ft.Text(size=14, weight=ft.FontWeight.W_500, font_family=self.INSTRUMENT_FONT)
         self.test_time_label = ft.Text("Test Time", size=13, weight=ft.FontWeight.W_700, color=self.MUTED_TEXT_COLOR, font_family=self.INSTRUMENT_FONT)
@@ -123,6 +139,8 @@ class MobileDiveStopwatchApp:
             cursor_color=self.DEFAULT_TEXT_COLOR,
             text_style=ft.TextStyle(font_family="monospace", height=1.25),
         )
+        self.recall_header_label = ft.Text("Event Log", size=16, weight=ft.FontWeight.W_700, color=self.DEFAULT_TEXT_COLOR)
+        self.recall_schedule_text = ft.Text(size=16, weight=ft.FontWeight.W_700, color=self.MUTED_TEXT_COLOR, font_family=self.INSTRUMENT_FONT)
         self.primary_button = ft.FilledButton(
             text="Primary",
             on_click=lambda _: self._dispatch(Intent.PRIMARY),
@@ -185,7 +203,15 @@ class MobileDiveStopwatchApp:
             expand=True,
             spacing=12,
             controls=[
-                ft.Text("Event Log", size=16, weight=ft.FontWeight.W_700, color=self.DEFAULT_TEXT_COLOR),
+                ft.Row(
+                    alignment=ft.MainAxisAlignment.START,
+                    vertical_alignment=ft.CrossAxisAlignment.CENTER,
+                    spacing=12,
+                    controls=[
+                        self.recall_header_label,
+                        self.recall_schedule_text,
+                    ],
+                ),
                 ft.Container(
                     expand=True,
                     border=ft.border.all(1, self.CARD_BORDER),
@@ -244,6 +270,32 @@ class MobileDiveStopwatchApp:
             color=self.DEFAULT_TEXT_COLOR,
             elevation=2,
         )
+        self.test_time_card = self._card(
+            ft.Column(
+                spacing=8,
+                controls=[
+                    ft.Row(
+                        alignment=ft.MainAxisAlignment.SPACE_BETWEEN,
+                        vertical_alignment=ft.CrossAxisAlignment.CENTER,
+                        controls=[
+                            self.test_time_label,
+                            self.test_time_text,
+                        ],
+                    ),
+                    ft.Row(
+                        spacing=8,
+                        controls=[
+                            ft.OutlinedButton("-1m", on_click=lambda _: self._advance_test_time(-60), expand=True, height=42, style=self._test_time_button_style()),
+                            ft.OutlinedButton("+1m", on_click=lambda _: self._advance_test_time(60), expand=True, height=42, style=self._test_time_button_style()),
+                            ft.OutlinedButton("+5m", on_click=lambda _: self._advance_test_time(300), expand=True, height=42, style=self._test_time_button_style()),
+                            ft.OutlinedButton("+30m", on_click=lambda _: self._advance_test_time(1800), expand=True, height=42, style=self._test_time_button_style()),
+                        ],
+                        wrap=False,
+                    ),
+                ],
+            ),
+            compact=True,
+        )
         self.page.add(
             ft.Column(
                 expand=True,
@@ -267,38 +319,13 @@ class MobileDiveStopwatchApp:
                                 ft.Row(
                                     controls=[
                                         self.recall_button,
-                                        ft.OutlinedButton("Reset", on_click=lambda _: self._dispatch(Intent.RESET), expand=True, height=48, style=self._utility_button_style()),
+                                        self.reset_button,
                                     ],
                                 ),
                             ],
                         ),
                     ),
-                    self._card(
-                        ft.Column(
-                            spacing=8,
-                            controls=[
-                                ft.Row(
-                                    alignment=ft.MainAxisAlignment.SPACE_BETWEEN,
-                                    vertical_alignment=ft.CrossAxisAlignment.CENTER,
-                                    controls=[
-                                        self.test_time_label,
-                                        self.test_time_text,
-                                    ],
-                                ),
-                                ft.Row(
-                                    spacing=8,
-                                    controls=[
-                                        ft.OutlinedButton("-1m", on_click=lambda _: self._advance_test_time(-60), expand=True, height=42, style=self._test_time_button_style()),
-                                        ft.OutlinedButton("+1m", on_click=lambda _: self._advance_test_time(60), expand=True, height=42, style=self._test_time_button_style()),
-                                        ft.OutlinedButton("+5m", on_click=lambda _: self._advance_test_time(300), expand=True, height=42, style=self._test_time_button_style()),
-                                        ft.OutlinedButton("+30m", on_click=lambda _: self._advance_test_time(1800), expand=True, height=42, style=self._test_time_button_style()),
-                                    ],
-                                    wrap=False,
-                                ),
-                            ],
-                        ),
-                        compact=True,
-                    ),
+                    self.test_time_card,
                 ],
             )
         )
@@ -330,8 +357,9 @@ class MobileDiveStopwatchApp:
 
     def _render(self) -> None:
         snap = self.engine.snapshot()
+        is_stopwatch = snap.mode_text == "STOPWATCH"
         phase = self.engine.state.dive.phase
-        editable_depth = phase in {DivePhase.READY, DivePhase.BOTTOM}
+        editable_depth = (not is_stopwatch) and phase in {DivePhase.READY, DivePhase.BOTTOM}
         self._render_mode_tile(snap.mode_text)
         self.status_value_text.value = snap.status_value_text
         self.primary_text.value = snap.primary_value_text
@@ -343,20 +371,18 @@ class MobileDiveStopwatchApp:
         self.depth_separator_text.visible = bool(snap.depth_timer_text)
         self.depth_timer_text.visible = bool(snap.depth_timer_text)
         self.depth_timer_text.value = snap.depth_timer_text
-        self.remaining_text.value = snap.remaining_display_text
+        self.remaining_text.value = snap.remaining_text
         self.detail_text.value = snap.detail_text
         self.test_time_text.value = self.engine.test_time_label()
+        self.test_time_card.visible = not is_stopwatch
         self.primary_button.text = snap.primary_button_label or "-"
         self.primary_button.disabled = not snap.primary_button_enabled
         self.secondary_button.text = snap.secondary_button_label or "-"
         self.secondary_button.disabled = not snap.secondary_button_enabled
-        self.summary_prefix_text.value = snap.summary_prefix_text
-        self.summary_value_text.value = snap.summary_value_text
-        self.summary_row.visible = bool(snap.summary_prefix_text or snap.summary_value_text)
-        guidance_summary = snap.summary_prefix_text == "Next: Input Max Depth for table/schedule" and not snap.summary_value_text
-        self.summary_prefix_text.italic = guidance_summary
-        self.summary_value_text.italic = False
+        self._render_summary(snap)
+        self.summary_row.visible = bool(snap.summary_text)
         self._apply_phase_colors(snap)
+        self._apply_button_styles(snap)
         self.primary_body_switcher.content = self.primary_recall_body if self.recall_active else self.primary_live_body
         self.recall_button.text = "Live" if self.recall_active else "Recall"
         self.recall_timer_text.visible = self.recall_active
@@ -371,8 +397,10 @@ class MobileDiveStopwatchApp:
             elevation=4 if self.recall_active else 2,
             text_style=ft.TextStyle(size=14, weight=ft.FontWeight.W_700),
         )
+        self.recall_schedule_text.value = snap.profile_schedule_text
+        self.recall_schedule_text.visible = bool(self.recall_schedule_text.value)
 
-        log_lines = self.engine.state.ui_log[-30:]
+        log_lines = self.engine.recall_lines()
         if log_lines != self._last_log_rendered:
             self.log_text.value = "\n".join(log_lines)
             self._last_log_rendered = log_lines
@@ -391,9 +419,44 @@ class MobileDiveStopwatchApp:
         self.depth_timer_text.color = self._kind_color(snap.depth_timer_kind)
         self.test_time_text.color = self.MUTED_TEXT_COLOR
         self.recall_timer_text.color = self._kind_color(snap.primary_value_kind)
-
         self.summary_prefix_text.color = self.DEFAULT_TEXT_COLOR
-        self.summary_value_text.color = self._kind_color(snap.summary_value_kind)
+        self.summary_value_text.color = self.O2_COLOR if snap.summary_value_kind == "o2" and self.summary_prefix_text.visible else self.DEFAULT_TEXT_COLOR
+        self.summary_text.color = self.DEFAULT_TEXT_COLOR
+
+    def _apply_button_styles(self, snap) -> None:
+        default_primary = ft.ButtonStyle(
+            shape=ft.RoundedRectangleBorder(radius=14),
+            bgcolor=self.PRIMARY_BUTTON_BG,
+            color=self.PRIMARY_BUTTON_TEXT,
+            padding=ft.padding.symmetric(vertical=14, horizontal=16),
+            shadow_color=self.BUTTON_SHADOW,
+            elevation=8,
+            text_style=ft.TextStyle(size=16, weight=ft.FontWeight.W_700, font_family=self.INSTRUMENT_FONT),
+        )
+        default_secondary = ft.ButtonStyle(
+            side=ft.BorderSide(1, self.OUTLINE_ACCENT),
+            shape=ft.RoundedRectangleBorder(radius=14),
+            color=self.DEFAULT_TEXT_COLOR,
+            bgcolor=self.BUTTON_SURFACE,
+            padding=ft.padding.symmetric(vertical=14, horizontal=16),
+            shadow_color=self.BUTTON_SHADOW,
+            elevation=4,
+            text_style=ft.TextStyle(size=16, weight=ft.FontWeight.W_700, font_family=self.INSTRUMENT_FONT),
+        )
+        self.primary_button.style = default_primary
+        if snap.secondary_button_label == "On O2":
+            self.secondary_button.style = ft.ButtonStyle(
+                side=ft.BorderSide(2, self.O2_COLOR),
+                shape=ft.RoundedRectangleBorder(radius=14),
+                color=self.O2_COLOR,
+                bgcolor=self.BUTTON_SURFACE,
+                padding=ft.padding.symmetric(vertical=14, horizontal=16),
+                shadow_color=self.BUTTON_SHADOW,
+                elevation=4,
+                text_style=ft.TextStyle(size=16, weight=ft.FontWeight.W_700, font_family=self.INSTRUMENT_FONT),
+            )
+            return
+        self.secondary_button.style = default_secondary
 
     def _render_mode_tile(self, mode_text: str) -> None:
         is_air_o2 = mode_text == "AIR/O2"
@@ -412,11 +475,34 @@ class MobileDiveStopwatchApp:
             offset=ft.Offset(0, 4),
         )
 
+    def _render_summary(self, snap) -> None:
+        text = snap.summary_text
+        if text.startswith("Next: "):
+            self.summary_prefix_text.visible = True
+            self.summary_prefix_text.value = "Next: "
+            self.summary_value_text.visible = True
+            self.summary_value_text.value = text.removeprefix("Next: ")
+            self.summary_value_text.italic = text == "Next: Input Max Depth for table/schedule"
+            self.summary_text.visible = False
+            self.summary_text.value = ""
+            self.summary_text.italic = False
+            return
+        self.summary_prefix_text.visible = False
+        self.summary_prefix_text.value = ""
+        self.summary_value_text.visible = False
+        self.summary_value_text.value = ""
+        self.summary_value_text.italic = False
+        self.summary_text.visible = True
+        self.summary_text.value = text
+        self.summary_text.italic = text == "Next: Input Max Depth for table/schedule"
+
     def _kind_color(self, kind: str) -> str:
         if kind == "o2":
             return self.O2_COLOR
         if kind == "air_break":
             return self.AIR_BREAK_COLOR
+        if kind == "off_o2":
+            return self.DEFAULT_TEXT_COLOR
         return self.DEFAULT_TEXT_COLOR
 
     def _card(self, content: ft.Control, *, emphasized: bool = False, expand: bool = False, compact: bool = False) -> ft.Container:
@@ -451,10 +537,10 @@ class MobileDiveStopwatchApp:
         return ft.ButtonStyle(
             side=ft.BorderSide(1, self.CARD_BORDER),
             shape=ft.RoundedRectangleBorder(radius=14),
-            color=self.MUTED_TEXT_COLOR,
-            bgcolor=self.BUTTON_SURFACE,
+            color=self.DEFAULT_TEXT_COLOR,
+            bgcolor="#121922",
             shadow_color=self.BUTTON_SHADOW,
-            elevation=3,
+            elevation=4,
             text_style=ft.TextStyle(size=15, weight=ft.FontWeight.W_600, font_family=self.INSTRUMENT_FONT),
         )
 

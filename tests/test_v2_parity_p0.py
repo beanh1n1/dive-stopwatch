@@ -109,7 +109,7 @@ class ActiveParityP0Tests(unittest.TestCase):
         self.assertEqual(engine.state.dive.oxygen.segment_started_at, current["now"])
         self.assertIsNone(engine.state.dive.oxygen.active_air_break)
 
-    def test_air_break_timer_anchors_to_break_start(self) -> None:
+    def test_off_o2_primary_timer_tracks_elapsed_deviation(self) -> None:
         current = {"now": datetime(2026, 3, 30, 9, 0, 0)}
         engine = Engine(now_provider=lambda: current["now"])
         engine.set_depth_text("145")
@@ -151,7 +151,7 @@ class ActiveParityP0Tests(unittest.TestCase):
 
         summary = engine.snapshot().summary_text
         self.assertTrue(summary.startswith("Next: 50 fsw for "))
-        self.assertTrue(summary.endswith("m"))
+        self.assertTrue(summary.endswith(" min"))
 
     def test_terminal_o2_stop_can_prioritize_air_break_when_due(self) -> None:
         current = {"now": datetime(2026, 4, 13, 10, 22, 2)}

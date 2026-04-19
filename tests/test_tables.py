@@ -3,7 +3,7 @@ import re
 from pathlib import Path
 import unittest
 
-from dive_stopwatch.minimal.profiles import DecoMode, apply_between_stop_delay, apply_first_stop_delay, build_profile, no_decompression_limit
+from dive_stopwatch.minimal.profiles import DecoMode, DelayOutcome, apply_between_stop_delay, apply_first_stop_delay, build_profile, no_decompression_limit
 
 
 DOCS = Path(__file__).resolve().parents[1] / "docs"
@@ -266,7 +266,7 @@ class MinimalTableRegressionTests(unittest.TestCase):
     def test_first_stop_delay_shallow_adds_time_to_first_stop(self) -> None:
         profile = build_profile(DecoMode.AIR, 113, 60)
         result = apply_first_stop_delay(profile=profile, actual_time_to_first_stop_sec=380, delay_depth_fsw=40)
-        self.assertEqual(result.outcome, "add_to_first_stop")
+        self.assertEqual(result.outcome, DelayOutcome.ADD_TO_FIRST_STOP)
         self.assertEqual(result.delay_min, 4)
         self.assertTrue(result.schedule_changed)
         self.assertEqual([(s.depth_fsw, s.duration_min) for s in result.profile.stops], [(30, 31), (20, 142)])
@@ -274,7 +274,7 @@ class MinimalTableRegressionTests(unittest.TestCase):
     def test_first_stop_delay_deep_recomputes_schedule(self) -> None:
         profile = build_profile(DecoMode.AIR, 121, 55)
         result = apply_first_stop_delay(profile=profile, actual_time_to_first_stop_sec=241, delay_depth_fsw=60)
-        self.assertEqual(result.outcome, "recompute")
+        self.assertEqual(result.outcome, DelayOutcome.RECOMPUTE)
         self.assertEqual(result.delay_min, 2)
         self.assertTrue(result.schedule_changed)
         self.assertEqual(result.profile.table_depth_fsw, 130)
@@ -284,7 +284,7 @@ class MinimalTableRegressionTests(unittest.TestCase):
     def test_between_stops_delay_deep_recomputes_remaining_schedule(self) -> None:
         profile = build_profile(DecoMode.AIR, 171, 60)
         result = apply_between_stop_delay(profile=profile, actual_elapsed_sec=250, planned_elapsed_sec=60, delay_depth_fsw=70)
-        self.assertEqual(result.outcome, "recompute")
+        self.assertEqual(result.outcome, DelayOutcome.RECOMPUTE)
         self.assertEqual(result.delay_min, 4)
         self.assertTrue(result.schedule_changed)
         self.assertEqual(result.profile.table_depth_fsw, 180)
