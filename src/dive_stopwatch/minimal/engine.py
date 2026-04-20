@@ -673,7 +673,49 @@ def _record_event(
     reset_travel: bool = False,
 ) -> EngineState:
     updated = state
+    extra_logs: tuple[str, ...] = ()
     if code:
+        if code.startswith("L") and code[1:].isdigit():
+            view = _dive_view(state, now)
+            if (
+                view.at_stop
+                and view.current_stop is not None
+                and view.stop_remaining is not None
+                and view.current_stop.index == int(code[1:])
+                and view.stop_remaining > 0.0
+            ):
+                extra_logs = (
+                    f"Left {view.current_stop.depth_fsw} fsw early ({format_mmss(view.stop_remaining)} remaining)",
+                )
+        elif (
+            (code.startswith("R") and code[1:].isdigit()) or code == "RS"
+        ) and state.dive.phase is DivePhase.TRAVEL and state.dive.profile is not None:
+            arrival_index = None if code == "RS" else int(code[1:])
+            anchor_event = _travel_anchor_event(state)
+            target_stop = next_stop_after(state.dive.profile, state.dive.current_stop_index)
+            if anchor_event is not None and (
+                (arrival_index is None and target_stop is None) or (target_stop is not None and target_stop.index == arrival_index)
+            ):
+                current_stop = stop_by_index(state.dive.profile, state.dive.current_stop_index) if state.dive.current_stop_index is not None else None
+                if state.dive.current_stop_index is None:
+                    planned_travel_sec = state.dive.profile.time_to_first_stop_sec
+                    arrival_label = f"Arrived {target_stop.depth_fsw} fsw early" if target_stop is not None else "Arrived Surface early"
+                elif arrival_index is None:
+                    planned_travel_sec = int(current_stop.depth_fsw * 2) if current_stop is not None else None
+                    arrival_label = "Arrived Surface early"
+                else:
+                    planned_travel_sec = (
+                        int(abs(current_stop.depth_fsw - target_stop.depth_fsw) * 2)
+                        if current_stop is not None and target_stop is not None
+                        else None
+                    )
+                    arrival_label = f"Arrived {target_stop.depth_fsw} fsw early" if target_stop is not None else "Arrived Surface early"
+                if planned_travel_sec is not None:
+                    elapsed_sec = _travel_progress_seconds(state, now, anchor_event.timestamp)
+                    if elapsed_sec < planned_travel_sec:
+                        extra_logs = (
+                            f"{arrival_label} ({format_mmss(planned_travel_sec - elapsed_sec)} before planned travel time)",
+                        )
         updated = replace(state, dive=replace(state.dive, events=state.dive.events + (Event(code=code, timestamp=now),)))
     dive = updated.dive if phase is None else replace(updated.dive, phase=phase)
     if phase is DivePhase.TRAVEL:
@@ -695,7 +737,8 @@ def _record_event(
             travel_delay_sec=0.0,
         )
     logged = f"{(label or code)} {now.strftime('%H:%M:%S')}".strip()
-    return replace(replace(updated, dive=dive), ui_log=updated.ui_log + ((logged,) if logged else ()))
+    logs = ((logged,) if logged else ()) + extra_logs
+    return replace(replace(updated, dive=dive), ui_log=updated.ui_log + logs)
 
 
 def _convert_current_o2_stop_to_air(state: EngineState, now: datetime, view: DiveView) -> EngineState:

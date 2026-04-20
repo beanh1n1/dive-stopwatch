@@ -587,6 +587,84 @@ class MinimalEngineTests(unittest.TestCase):
         self.assertEqual(snap.status_text, "TRAVELING")
         self.assertEqual(snap.status_value_text, "Traveling")
 
+    def test_leaving_stop_early_is_logged(self) -> None:
+        current = {"now": datetime(2026, 4, 19, 12, 0, 0)}
+        engine = Engine(now_provider=lambda: current["now"])
+        engine.set_depth_text("145")
+        engine.dispatch(Intent.MODE)
+        engine.dispatch(Intent.PRIMARY)  # LS
+        current["now"] += timedelta(minutes=3)
+        engine.dispatch(Intent.PRIMARY)  # RB
+        current["now"] += timedelta(minutes=39)
+        engine.dispatch(Intent.PRIMARY)  # LB -> 150/45
+        current["now"] += timedelta(minutes=3)
+        engine.dispatch(Intent.PRIMARY)  # R1 50
+
+        at_first_stop = engine.snapshot()
+        self.assertEqual(at_first_stop.depth_text, "50 fsw")
+        self.assertEqual(at_first_stop.depth_timer_text, "03:00 left")
+
+        current["now"] += timedelta(minutes=1)
+        engine.dispatch(Intent.PRIMARY)  # L1 early
+
+        self.assertTrue(engine.state.ui_log[-2].startswith("L1 "))
+        self.assertEqual(engine.state.ui_log[-1], "Left 50 fsw early (02:00 remaining)")
+
+    def test_arriving_at_stop_early_is_logged(self) -> None:
+        current = {"now": datetime(2026, 4, 19, 12, 30, 0)}
+        engine = Engine(now_provider=lambda: current["now"])
+        engine.set_depth_text("145")
+        engine.dispatch(Intent.MODE)
+        engine.dispatch(Intent.PRIMARY)  # LS
+        current["now"] += timedelta(minutes=3)
+        engine.dispatch(Intent.PRIMARY)  # RB
+        current["now"] += timedelta(minutes=39)
+        engine.dispatch(Intent.PRIMARY)  # LB -> 150/45
+        current["now"] += timedelta(minutes=2, seconds=50)
+        engine.dispatch(Intent.PRIMARY)  # R1 early by 30s
+
+        self.assertTrue(engine.state.ui_log[-2].startswith("R1 "))
+        self.assertEqual(engine.state.ui_log[-1], "Arrived 50 fsw early (00:30 before planned travel time)")
+
+    def test_arriving_at_surface_early_is_logged(self) -> None:
+        current = {"now": datetime(2026, 4, 19, 13, 0, 0)}
+        engine = Engine(now_provider=lambda: current["now"])
+        engine.set_depth_text("145")
+        engine.dispatch(Intent.MODE)
+        engine.dispatch(Intent.MODE)
+        engine.dispatch(Intent.PRIMARY)  # LS
+        current["now"] += timedelta(minutes=3)
+        engine.dispatch(Intent.PRIMARY)  # RB
+        current["now"] += timedelta(minutes=39)
+        engine.dispatch(Intent.PRIMARY)  # LB -> 150/45
+        current["now"] += timedelta(minutes=3)
+        engine.dispatch(Intent.PRIMARY)  # R1 50
+        current["now"] += timedelta(seconds=20)
+        engine.dispatch(Intent.PRIMARY)  # L1
+        current["now"] += timedelta(seconds=20)
+        engine.dispatch(Intent.PRIMARY)  # R2 40
+        current["now"] += timedelta(seconds=20)
+        engine.dispatch(Intent.PRIMARY)  # L2
+        current["now"] += timedelta(seconds=20)
+        engine.dispatch(Intent.PRIMARY)  # R3 30
+        current["now"] += timedelta(seconds=20)
+        engine.dispatch(Intent.SECONDARY)  # On O2
+        current["now"] += timedelta(minutes=12)
+        engine.dispatch(Intent.PRIMARY)  # L3
+        current["now"] += timedelta(seconds=20)
+        engine.dispatch(Intent.PRIMARY)  # R4 20
+        current["now"] += timedelta(seconds=20)
+        engine.dispatch(Intent.SECONDARY)  # On O2
+        current["now"] += timedelta(minutes=40)
+        engine.dispatch(Intent.PRIMARY)  # L4
+        current["now"] += timedelta(seconds=20)
+        engine.dispatch(Intent.PRIMARY)  # L4 (converted air stop)
+        current["now"] += timedelta(seconds=20)
+        engine.dispatch(Intent.PRIMARY)  # RS early by 20s
+
+        self.assertTrue(engine.state.ui_log[-2].startswith("RS "))
+        self.assertEqual(engine.state.ui_log[-1], "Arrived Surface early (00:20 before planned travel time)")
+
     def test_o2_travel_state_preserves_continuity_between_30_and_20(self) -> None:
         current = {"now": datetime(2026, 4, 12, 12, 0, 0)}
         engine = Engine(now_provider=lambda: current["now"])

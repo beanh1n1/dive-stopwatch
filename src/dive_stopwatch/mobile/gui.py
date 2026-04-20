@@ -31,6 +31,7 @@ class MobileDiveStopwatchApp:
     BUTTON_SHADOW = "#040608"
     METAL_HIGHLIGHT = "#D8E0E8"
     INSTRUMENT_FONT = "InstrumentMono"
+    BRAND_FONT = "VintageHand"
 
     def __init__(self, page: ft.Page, engine: Engine | None = None) -> None:
         self.page = page
@@ -237,6 +238,7 @@ class MobileDiveStopwatchApp:
         self.page.theme_mode = ft.ThemeMode.DARK
         self.page.fonts = {
             self.INSTRUMENT_FONT: str(Path(__file__).resolve().parents[3] / "assets" / "fonts" / "CaissonCockpit.ttf"),
+            self.BRAND_FONT: str(Path(__file__).resolve().parents[3] / "vintage_hand_type.otf"),
         }
         self.page.window_min_width = 360
         self.page.window_min_height = 720
@@ -247,21 +249,27 @@ class MobileDiveStopwatchApp:
                 spacing=8,
                 vertical_alignment=ft.CrossAxisAlignment.END,
                 controls=[
-                    ft.Text(
-                        "Caisson",
-                        size=40,
-                        weight=ft.FontWeight.W_700,
-                        italic=True,
-                        font_family="Helvetica Neue",
-                        color=self.DEFAULT_TEXT_COLOR,
+                    ft.Container(
+                        padding=ft.padding.only(top=4),
+                        content=ft.Text(
+                            "Caisson",
+                            size=40,
+                            weight=ft.FontWeight.W_400,
+                            font_family=self.BRAND_FONT,
+                            color=self.DEFAULT_TEXT_COLOR,
+                            style=ft.TextStyle(letter_spacing=2.0),
+                        ),
                     ),
-                    ft.Text(
-                        "Instruments",
-                        size=31,
-                        weight=ft.FontWeight.W_700,
-                        font_family="Helvetica Neue",
-                        color=self.DEFAULT_TEXT_COLOR,
-                        style=ft.TextStyle(letter_spacing=1.4),
+                    ft.Container(
+                        padding=ft.padding.only(left=1, bottom = 11.4),
+                        content=ft.Text(
+                            "Instruments",
+                            size=26,
+                            weight=ft.FontWeight.W_700,
+                            font_family=self.INSTRUMENT_FONT,
+                            color=self.DEFAULT_TEXT_COLOR,
+                            style=ft.TextStyle(letter_spacing=.4),
+                        ),
                     ),
                 ],
             ),
