@@ -66,6 +66,7 @@ class O2ToAirConversionResult:
     converted_air_min: int
     air_to_o2_ratio: float
     source_stop_depth_fsw: int
+    converted_stop_index: int
 
 
 @dataclass(frozen=True)
@@ -366,8 +367,9 @@ def convert_remaining_o2_to_air(
 
     remaining_o2_min = _ceil_minutes(max(remaining_o2_stop_sec, 0))
     air_profile = build_profile(DecoMode.AIR, profile.input_depth_fsw, profile.input_bottom_time_min)
-    air_stop = stop_by_index(air_profile, current_stop_index)
-    if air_stop is None or air_stop.depth_fsw != current_stop.depth_fsw or air_stop.gas != "air":
+    converted_stop_index = next((stop.index for stop in air_profile.stops if stop.depth_fsw == current_stop.depth_fsw and stop.gas == "air"), None)
+    air_stop = stop_by_index(air_profile, converted_stop_index) if converted_stop_index is not None else None
+    if air_stop is None:
         raise ValueError("Matching AIR stop could not be located for conversion.")
 
     if current_stop.duration_min <= 0:
@@ -377,7 +379,7 @@ def convert_remaining_o2_to_air(
     converted_air_min = max(math.ceil(remaining_o2_min * air_to_o2_ratio), 0)
     converted_stop = replace(air_stop, duration_min=converted_air_min)
     converted_stops = list(air_profile.stops)
-    converted_stops[current_stop_index - 1] = converted_stop
+    converted_stops[converted_stop_index - 1] = converted_stop
     converted_profile = replace(air_profile, stops=tuple(converted_stops))
     return O2ToAirConversionResult(
         profile=converted_profile,
@@ -385,6 +387,7 @@ def convert_remaining_o2_to_air(
         converted_air_min=converted_air_min,
         air_to_o2_ratio=air_to_o2_ratio,
         source_stop_depth_fsw=current_stop.depth_fsw,
+        converted_stop_index=converted_stop_index,
     )
 
 

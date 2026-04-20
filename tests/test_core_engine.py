@@ -1730,6 +1730,46 @@ class CoreEngineTests(unittest.TestCase):
         self.assertTrue(engine.state.ui_log[-2].startswith("Convert to Air "))
         self.assertEqual(engine.state.ui_log[-1], "Converted remaining O2 at 30 fsw to 18 min air 150/45 [50/3,40/8,30/12,20/40] -> 150/45 [50/3,40/8,30/18,20/142]")
 
+    def test_convert_to_air_handles_air_profile_with_shifted_stop_indexes(self) -> None:
+        current = {"now": datetime(2026, 4, 19, 21, 9, 28)}
+        engine = Engine(now_provider=lambda: current["now"])
+        engine.set_depth_text("190")
+        engine.dispatch(Intent.MODE)
+        engine.dispatch(Intent.MODE)
+        engine.dispatch(Intent.PRIMARY)  # LS
+        current["now"] = datetime(2026, 4, 19, 21, 11, 30)
+        engine.dispatch(Intent.PRIMARY)  # RB
+        current["now"] = datetime(2026, 4, 19, 21, 21, 35)
+        engine.dispatch(Intent.PRIMARY)  # LB -> 190/13
+        current["now"] = datetime(2026, 4, 19, 21, 21, 38)
+        engine.dispatch(Intent.PRIMARY)  # R1 50
+        current["now"] = datetime(2026, 4, 19, 21, 22, 40)
+        engine.dispatch(Intent.PRIMARY)  # L1
+        current["now"] = datetime(2026, 4, 19, 21, 23, 42)
+        engine.dispatch(Intent.PRIMARY)  # R2 40
+        current["now"] = datetime(2026, 4, 19, 21, 25, 45)
+        engine.dispatch(Intent.PRIMARY)  # L2
+        current["now"] = datetime(2026, 4, 19, 21, 26, 47)
+        engine.dispatch(Intent.PRIMARY)  # R3 30
+        current["now"] = datetime(2026, 4, 19, 21, 26, 48)
+        engine.dispatch(Intent.SECONDARY)  # On O2
+        current["now"] = datetime(2026, 4, 19, 21, 26, 49)
+        engine.dispatch(Intent.SECONDARY)  # Off O2
+
+        off_o2 = engine.snapshot()
+        self.assertEqual(off_o2.primary_button_label, "Convert to Air")
+        self.assertEqual(off_o2.depth_text, "30 fsw")
+        self.assertEqual(off_o2.depth_timer_text, "01:59 left")
+
+        engine.dispatch(Intent.PRIMARY)  # Convert to Air
+
+        converted = engine.snapshot()
+        self.assertEqual(engine.state.dive.profile.mode, DecoMode.AIR)
+        self.assertEqual(engine.state.dive.current_stop_index, 2)
+        self.assertEqual(converted.depth_text, "30 fsw")
+        self.assertEqual(converted.depth_timer_text, "03:00 left")
+        self.assertEqual(converted.summary_text, "Next: 20 fsw for 16 min")
+
     def test_o2_stop_prefers_next_stop_until_air_break_due_occurs_before_stop_end(self) -> None:
         current = {"now": datetime(2026, 4, 12, 12, 0, 0)}
         engine = Engine(now_provider=lambda: current["now"])

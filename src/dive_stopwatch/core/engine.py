@@ -753,9 +753,9 @@ def _convert_current_o2_stop_to_air(state: EngineState, now: datetime, view: Div
     updated = _record_event(
         state,
         now,
-        code=f"CA{state.dive.current_stop_index}",
+        code=f"CA{result.converted_stop_index}",
         label="Convert to Air",
-        current_stop_index=state.dive.current_stop_index,
+        current_stop_index=result.converted_stop_index,
         oxygen=OxygenState(),
     )
     signature = _profile_signature(updated, now, profile=result.profile)

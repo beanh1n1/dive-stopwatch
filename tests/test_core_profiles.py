@@ -265,6 +265,20 @@ class CoreProfilesTests(unittest.TestCase):
         self.assertEqual(result.profile.mode, DecoMode.AIR)
         self.assertEqual([(stop.depth_fsw, stop.duration_min, stop.gas) for stop in result.profile.stops], [(70, 4, "air"), (60, 5, "air"), (50, 6, "air"), (40, 8, "air"), (30, 26, "air"), (20, 33, "air")])
 
+    def test_convert_remaining_o2_to_air_matches_air_stop_by_depth_not_original_index(self) -> None:
+        profile = build_profile(DecoMode.AIR_O2, 190, 13)
+
+        result = convert_remaining_o2_to_air(
+            profile=profile,
+            current_stop_index=3,
+            remaining_o2_stop_sec=2 * 60,
+        )
+
+        self.assertEqual(result.source_stop_depth_fsw, 30)
+        self.assertEqual(result.converted_stop_index, 2)
+        self.assertEqual(result.converted_air_min, 3)
+        self.assertEqual([(stop.depth_fsw, stop.duration_min, stop.gas) for stop in result.profile.stops], [(40, 1, "air"), (30, 3, "air"), (20, 16, "air")])
+
     def test_convert_remaining_o2_to_air_rejects_non_o2_stop(self) -> None:
         profile = build_profile(DecoMode.AIR_O2, 145, 40)
 
