@@ -86,4 +86,3 @@ Agents should not start by inferring rules from current tests or UI behavior.
 
 - [MANUAL_APP_MISMATCH_AUDIT.md](/Users/iananderson/projects/DiveStopwatchProject/docs/MANUAL_APP_MISMATCH_AUDIT.md)
 - [RULE_TRACEABILITY_MATRIX.md](/Users/iananderson/projects/DiveStopwatchProject/docs/RULE_TRACEABILITY_MATRIX.md)
-- [HARDENING_PLAN.md](/Users/iananderson/projects/DiveStopwatchProject/docs/HARDENING_PLAN.md)

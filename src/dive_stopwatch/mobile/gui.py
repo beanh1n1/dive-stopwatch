@@ -238,7 +238,7 @@ class MobileDiveStopwatchApp:
         self.page.theme_mode = ft.ThemeMode.DARK
         self.page.fonts = {
             self.INSTRUMENT_FONT: str(Path(__file__).resolve().parents[3] / "assets" / "fonts" / "CaissonCockpit.ttf"),
-            self.BRAND_FONT: str(Path(__file__).resolve().parents[3] / "vintage_hand_type.otf"),
+            self.BRAND_FONT: str(Path(__file__).resolve().parents[3] / "assets" / "fonts" / "vintage_hand_type.otf"),
         }
         self.page.window_min_width = 360
         self.page.window_min_height = 720
