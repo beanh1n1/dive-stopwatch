@@ -1770,6 +1770,38 @@ class CoreEngineTests(unittest.TestCase):
         self.assertEqual(converted.depth_timer_text, "03:00 left")
         self.assertEqual(converted.summary_text, "Next: 20 fsw for 16 min")
 
+    def test_convert_to_air_populates_display_when_first_o2_stop_becomes_later_air_index(self) -> None:
+        current = {"now": datetime(2026, 4, 19, 21, 9, 17)}
+        engine = Engine(now_provider=lambda: current["now"])
+        engine.set_depth_text("170")
+        engine.dispatch(Intent.MODE)
+        engine.dispatch(Intent.MODE)
+        engine.dispatch(Intent.PRIMARY)  # LS
+        current["now"] = datetime(2026, 4, 19, 21, 12, 21)
+        engine.dispatch(Intent.PRIMARY)  # RB
+        current["now"] = datetime(2026, 4, 19, 21, 22, 31)
+        engine.dispatch(Intent.PRIMARY)  # LB -> 170/15
+        current["now"] = datetime(2026, 4, 19, 21, 24, 36)
+        engine.dispatch(Intent.SECONDARY)  # Delay 1 start
+        current["now"] = datetime(2026, 4, 19, 21, 25, 48)
+        engine.dispatch(Intent.SECONDARY)  # Delay 1 end -> 170/20 [30/6,20/12]
+        current["now"] = datetime(2026, 4, 19, 21, 29, 2)
+        engine.dispatch(Intent.PRIMARY)  # R1 30
+        current["now"] = datetime(2026, 4, 19, 21, 29, 4)
+        engine.dispatch(Intent.SECONDARY)  # On O2
+        current["now"] = datetime(2026, 4, 19, 21, 29, 12)
+        engine.dispatch(Intent.SECONDARY)  # Off O2
+        current["now"] = datetime(2026, 4, 19, 21, 29, 27)
+        engine.dispatch(Intent.PRIMARY)  # Convert to Air
+
+        converted = engine.snapshot()
+        self.assertEqual(engine.state.dive.profile.mode, DecoMode.AIR)
+        self.assertEqual(engine.state.dive.current_stop_index, 2)
+        self.assertEqual(converted.depth_text, "30 fsw")
+        self.assertEqual(converted.primary_text, "00:00.0")
+        self.assertEqual(converted.depth_timer_text, "06:00 left")
+        self.assertEqual(converted.summary_text, "Next: 20 fsw for 24 min")
+
     def test_o2_stop_prefers_next_stop_until_air_break_due_occurs_before_stop_end(self) -> None:
         current = {"now": datetime(2026, 4, 12, 12, 0, 0)}
         engine = Engine(now_provider=lambda: current["now"])

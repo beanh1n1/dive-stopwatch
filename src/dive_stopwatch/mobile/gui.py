@@ -418,7 +418,7 @@ class MobileDiveStopwatchApp:
     def _apply_phase_colors(self, snap) -> None:
         self.status_label_text.color = self.DEFAULT_TEXT_COLOR
         self.status_value_text.color = self._kind_color(snap.status_value_kind)
-        self.primary_text.color = self._kind_color(snap.primary_value_kind)
+        self.primary_text.color = self.AIR_BREAK_COLOR if snap.status_value_kind == "off_o2" else self._kind_color(snap.primary_value_kind)
         self.remaining_text.color = self.DEFAULT_TEXT_COLOR
         self.detail_text.color = self.MUTED_TEXT_COLOR
         self.depth_text.color = self.DEFAULT_TEXT_COLOR
@@ -426,7 +426,7 @@ class MobileDiveStopwatchApp:
         self.depth_unit_text.color = self.DEFAULT_TEXT_COLOR
         self.depth_timer_text.color = self._kind_color(snap.depth_timer_kind)
         self.test_time_text.color = self.MUTED_TEXT_COLOR
-        self.recall_timer_text.color = self._kind_color(snap.primary_value_kind)
+        self.recall_timer_text.color = self.AIR_BREAK_COLOR if snap.status_value_kind == "off_o2" else self._kind_color(snap.primary_value_kind)
         self.summary_prefix_text.color = self.DEFAULT_TEXT_COLOR
         self.summary_value_text.color = self.O2_COLOR if snap.summary_value_kind == "o2" and self.summary_prefix_text.visible else self.DEFAULT_TEXT_COLOR
         self.summary_text.color = self.DEFAULT_TEXT_COLOR

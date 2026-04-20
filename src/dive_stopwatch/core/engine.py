@@ -411,12 +411,12 @@ def _dive_view(state: EngineState, now: datetime) -> DiveView:
         else None
     )
     convert_to_air = find_latest_event(state.dive.events, f"CA{state.dive.current_stop_index}") if at_stop else None
-    if arrival is None:
+    if convert_to_air is not None and current_stop is not None and current_stop.gas == "air":
+        stop_anchor = convert_to_air.timestamp
+    elif arrival is None:
         stop_anchor = None
     elif first_o2_stop and awaiting_o2:
         stop_anchor = None
-    elif convert_to_air is not None and current_stop is not None and current_stop.gas == "air":
-        stop_anchor = convert_to_air.timestamp
     elif first_o2_stop and state.dive.oxygen.first_confirmed_at is not None:
         stop_anchor = state.dive.oxygen.first_confirmed_at
     elif prior_departure is not None:
