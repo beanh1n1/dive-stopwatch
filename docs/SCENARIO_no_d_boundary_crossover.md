@@ -75,8 +75,8 @@ Surface` to a decompression-bearing schedule once the no-D boundary is exceeded.
   - `RULE_core_definitions.md`
   - `RULE_display_and_timer_semantics.md`
 - Related code paths:
-  - `src/dive_stopwatch/minimal/profiles.py`
-  - `src/dive_stopwatch/minimal/snapshot.py`
+  - `src/dive_stopwatch/core/profiles.py`
+  - `src/dive_stopwatch/core/snapshot.py`
 - Related tests:
   - `tests/test_tables.py`
-  - `tests/test_minimal_engine.py`
+  - `tests/test_core_engine.py`

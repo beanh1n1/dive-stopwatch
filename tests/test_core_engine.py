@@ -1,11 +1,11 @@
 from datetime import datetime, timedelta
 import unittest
 
-from dive_stopwatch.minimal.engine import DivePhase, Engine, Intent
-from dive_stopwatch.minimal.profiles import DecoMode, DelayOutcome
+from dive_stopwatch.core.engine import DivePhase, Engine, Intent
+from dive_stopwatch.core.profiles import DecoMode, DelayOutcome
 
 
-class MinimalEngineTests(unittest.TestCase):
+class CoreEngineTests(unittest.TestCase):
     def _reach_final_twenty_departure_point(self, engine: Engine, current: dict[str, datetime]) -> None:
         engine.set_depth_text("145")
         engine.dispatch(Intent.MODE)
@@ -399,6 +399,21 @@ class MinimalEngineTests(unittest.TestCase):
         self.assertEqual(snap.remaining_text, "")
         self.assertEqual(snap.depth_timer_text, "")
         self.assertEqual(snap.summary_text, "Next: Input Max Depth for table/schedule")
+
+    def test_ready_state_shows_no_decompression_preview_after_depth_input_and_clears_on_ls(self) -> None:
+        current = {"now": datetime(2026, 4, 12, 12, 0, 0)}
+        engine = Engine(now_provider=lambda: current["now"])
+        engine.dispatch(Intent.MODE)  # AIR
+        engine.set_depth_text("68")
+
+        ready = engine.snapshot()
+        self.assertEqual(ready.status_text, "READY")
+        self.assertEqual(ready.summary_text, "Table/No-D: 70 / 48")
+
+        engine.dispatch(Intent.PRIMARY)  # LS
+        descent = engine.snapshot()
+        self.assertEqual(descent.status_text, "DESCENT")
+        self.assertEqual(descent.summary_text, "Next: --")
 
     def test_first_o2_confirmation_uses_secondary_at_first_o2_stop(self) -> None:
         current = {"now": datetime(2026, 4, 12, 12, 0, 0)}

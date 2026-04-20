@@ -1,4 +1,4 @@
-"""Greenfield minimal runtime package."""
+"""Core runtime package for the dive stopwatch application."""
 
 from .engine import Engine, Intent
 from .profiles import DecoMode, DiveProfile, ProfileStop, build_profile

@@ -1,7 +1,7 @@
 from datetime import datetime, timedelta
 import unittest
 
-from dive_stopwatch.minimal import Engine, Intent
+from dive_stopwatch.core import Engine, Intent
 
 
 class ActiveParityP1Tests(unittest.TestCase):

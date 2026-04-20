@@ -13,7 +13,7 @@ dev = ["pytest>=8.0"]
 mobile = ["flet[all]>=0.28,<0.29"]
 
 [project.scripts]
-dive-stopwatch = "dive_stopwatch.minimal:main"
+dive-stopwatch = "dive_stopwatch.core:main"
 dive-stopwatch-mobile = "dive_stopwatch.mobile.main:main"
 
 [tool.setuptools]

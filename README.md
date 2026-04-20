@@ -4,10 +4,10 @@ This repo contains the live `dive-stopwatch` runtime and a parallel Flet mobile 
 
 ## What Is Live
 
-- `src/dive_stopwatch/minimal/`
+- `src/dive_stopwatch/core/`
   - current runtime
   - stopwatch runtime
-  - desktop/minimal GUI
+  - desktop GUI
 - `src/dive_stopwatch/mobile/`
   - Flet mobile GUI
 - `docs/AIR.csv` and `docs/AIR_O2.csv`
@@ -33,7 +33,7 @@ If docs, tests, or code disagree with the manual chapter, the manual wins.
 From project root:
 
 ```bash
-PYTHONPATH=src python3 -m dive_stopwatch.minimal
+PYTHONPATH=src python3 -m dive_stopwatch.core
 ```
 
 Or after editable install:

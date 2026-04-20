@@ -5,8 +5,8 @@ from pathlib import Path
 
 import flet as ft
 
-from ..minimal import Engine, Intent
-from ..minimal.engine import DivePhase
+from ..core import Engine, Intent
+from ..core.engine import DivePhase
 
 
 class MobileDiveStopwatchApp:

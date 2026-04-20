@@ -145,9 +145,9 @@ These definitions apply whenever the runtime:
   - `docs/AIR.csv`
   - `docs/AIR_O2.csv`
 - Related code paths:
-  - `src/dive_stopwatch/minimal/engine.py`
-  - `src/dive_stopwatch/minimal/profiles.py`
-  - `src/dive_stopwatch/minimal/snapshot.py`
+  - `src/dive_stopwatch/core/engine.py`
+  - `src/dive_stopwatch/core/profiles.py`
+  - `src/dive_stopwatch/core/snapshot.py`
 - Related scenarios:
   - `SCENARIO_air_80_50.md`
   - `SCENARIO_air_o2_150_40.md`

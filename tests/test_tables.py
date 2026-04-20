@@ -3,7 +3,7 @@ import re
 from pathlib import Path
 import unittest
 
-from dive_stopwatch.minimal.profiles import DecoMode, DelayOutcome, apply_between_stop_delay, apply_first_stop_delay, build_profile, no_decompression_limit
+from dive_stopwatch.core.profiles import DecoMode, DelayOutcome, apply_between_stop_delay, apply_first_stop_delay, build_profile, no_decompression_limit
 
 
 DOCS = Path(__file__).resolve().parents[1] / "docs"
@@ -128,7 +128,7 @@ class CsvSourceOfTruthTests(unittest.TestCase):
                         self.assertEqual(profile.table_bottom_time_min, first_deco)
 
 
-class MinimalTableRegressionTests(unittest.TestCase):
+class CoreTableRegressionTests(unittest.TestCase):
     def test_air_and_air_o2_depth_ladders_match_after_75_fsw_correction(self) -> None:
         air_depths = _depths("AIR.csv")
         air_o2_depths = _depths("AIR_O2.csv")

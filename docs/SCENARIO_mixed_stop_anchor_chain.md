@@ -49,5 +49,5 @@ Provide one end-to-end acceptance trace proving the anchor changes across:
   - `RULE_display_and_timer_semantics.md`
   - `RULE_delay_corrections.md`
 - Related code paths:
-  - `src/dive_stopwatch/minimal/engine.py`
-  - `src/dive_stopwatch/minimal/snapshot.py`
+  - `src/dive_stopwatch/core/engine.py`
+  - `src/dive_stopwatch/core/snapshot.py`

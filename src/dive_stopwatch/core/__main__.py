@@ -5,7 +5,7 @@ from pathlib import Path
 
 if __package__ in {None, ""}:
     sys.path.insert(0, str(Path(__file__).resolve().parents[2]))
-    from dive_stopwatch.minimal import main
+    from dive_stopwatch.core import main
 else:
     from . import main
 

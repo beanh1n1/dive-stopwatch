@@ -154,4 +154,4 @@ including O2 start, included travel time, and the required air break at `20 fsw`
   - `docs/AIR_O2.csv`
 - Related tests:
   - `tests/test_tables.py`
-  - `tests/test_minimal_engine.py`
+  - `tests/test_core_engine.py`

@@ -4,7 +4,7 @@ from dataclasses import dataclass
 from datetime import datetime
 from typing import TYPE_CHECKING
 
-from .profiles import DiveProfile, next_stop_after, no_decompression_limit, stop_by_index
+from .profiles import DiveProfile, build_profile, next_stop_after, no_decompression_limit, stop_by_index
 from .profiles import DelayOutcome
 
 if TYPE_CHECKING:
@@ -49,7 +49,7 @@ def create_snapshot(state: EngineState, now: datetime) -> Snapshot:
     primary_text = _build_primary_text(eng, state, now, phase, clean_remaining, view, active_break)
     depth_text = _build_depth_text(eng, state, now, phase, view)
     remaining_text, bottom_depth_timer_text = _build_remaining_fields(eng, state, now, phase, view)
-    summary_text = _build_summary_text(eng, phase, clean_remaining, view)
+    summary_text = _build_summary_text(eng, state, phase, clean_remaining, view)
     detail_text = _build_detail_text(eng, state, now, active_break)
     primary_label, secondary_label, primary_enabled, secondary_enabled = _build_dive_button_fields(
         eng, state, phase, view, active_break
@@ -216,11 +216,14 @@ def _build_remaining_fields(eng, state: EngineState, now: datetime, phase, view)
     return "", bottom_depth_timer_text
 
 
-def _build_summary_text(eng, phase, clean_remaining: float | None, view) -> str:
+def _build_summary_text(eng, state: EngineState, phase, clean_remaining: float | None, view) -> str:
     if phase is eng.DivePhase.SURFACE and clean_remaining is not None:
         return ""
     if phase is eng.DivePhase.SURFACE:
         return ""
+    if phase is eng.DivePhase.READY:
+        preview = _ready_no_decompression_preview(eng, state, view)
+        return preview if preview is not None else "Next: --"
     if phase is eng.DivePhase.BOTTOM and view.depth is None:
         return "Next: Input Max Depth for table/schedule"
     if view.profile is None:
@@ -245,6 +248,16 @@ def _build_detail_text(eng, state: EngineState, now: datetime, active_break: dat
     if active_break is not None:
         return ""
     return ""
+
+
+def _ready_no_decompression_preview(eng, state: EngineState, view) -> str | None:
+    if view.depth is None or state.deco_mode is None:
+        return None
+    limit_min = no_decompression_limit(state.deco_mode, view.depth)
+    if limit_min is None:
+        return None
+    preview_profile = build_profile(state.deco_mode, view.depth, 1)
+    return f"Table/No-D: {preview_profile.table_depth_fsw} / {limit_min}"
 
 
 def _build_dive_button_fields(eng, state: EngineState, phase, view, active_break: datetime | None) -> tuple[str, str, bool, bool]:

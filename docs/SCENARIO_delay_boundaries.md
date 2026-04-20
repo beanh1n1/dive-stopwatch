@@ -101,8 +101,8 @@ exactly `50 fsw`, including both recompute and non-recompute branches.
 - Related rules:
   - `RULE_delay_corrections.md`
 - Related code paths:
-  - `src/dive_stopwatch/minimal/profiles.py`
-  - `src/dive_stopwatch/minimal/engine.py`
+  - `src/dive_stopwatch/core/profiles.py`
+  - `src/dive_stopwatch/core/engine.py`
 - Related tests:
-  - `tests/test_minimal_profiles.py`
-  - `tests/test_minimal_engine.py`
+  - `tests/test_core_profiles.py`
+  - `tests/test_core_engine.py`
