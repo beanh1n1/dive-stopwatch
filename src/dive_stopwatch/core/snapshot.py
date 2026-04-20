@@ -256,8 +256,9 @@ def _ready_no_decompression_preview(eng, state: EngineState, view) -> str | None
     limit_min = no_decompression_limit(state.deco_mode, view.depth)
     if limit_min is None:
         return None
-    preview_profile = build_profile(state.deco_mode, view.depth, 1)
-    return f"Table/No-D: {preview_profile.table_depth_fsw} / {limit_min}"
+    preview_profile = build_profile(state.deco_mode, view.depth, limit_min)
+    repeat_group = f" {preview_profile.repeat_group}" if preview_profile.repeat_group else ""
+    return f"No-D Limit: {preview_profile.table_depth_fsw} / {preview_profile.table_bottom_time_min}{repeat_group}"
 
 
 def _build_dive_button_fields(eng, state: EngineState, phase, view, active_break: datetime | None) -> tuple[str, str, bool, bool]:

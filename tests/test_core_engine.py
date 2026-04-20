@@ -408,7 +408,7 @@ class CoreEngineTests(unittest.TestCase):
 
         ready = engine.snapshot()
         self.assertEqual(ready.status_text, "READY")
-        self.assertEqual(ready.summary_text, "Table/No-D: 70 / 48")
+        self.assertEqual(ready.summary_text, "No-D Limit: 70 / 48 Z")
 
         engine.dispatch(Intent.PRIMARY)  # LS
         descent = engine.snapshot()
