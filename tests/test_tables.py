@@ -240,6 +240,86 @@ class CoreTableRegressionTests(unittest.TestCase):
         self.assertEqual(profile.stops[0].depth_fsw, 80)
         self.assertEqual(profile.stops[0].duration_min, 4)
 
+    def test_air_200_fsw_profile_uses_new_manual_rows(self) -> None:
+        profile = build_profile(DecoMode.AIR, 200, 25)
+        self.assertEqual(profile.table_depth_fsw, 200)
+        self.assertEqual(profile.table_bottom_time_min, 25)
+        self.assertEqual(profile.time_to_first_stop_sec, 260)
+        self.assertEqual([(s.depth_fsw, s.duration_min, s.gas) for s in profile.stops], [(70, 1, "air"), (60, 5, "air"), (50, 6, "air"), (40, 6, "air"), (30, 7, "air"), (20, 85, "air")])
+        self.assertEqual(profile.repeat_group, "Z")
+
+    def test_air_o2_200_fsw_profile_uses_new_manual_rows(self) -> None:
+        profile = build_profile(DecoMode.AIR_O2, 200, 25)
+        self.assertEqual(profile.table_depth_fsw, 200)
+        self.assertEqual(profile.table_bottom_time_min, 25)
+        self.assertEqual(profile.time_to_first_stop_sec, 260)
+        self.assertEqual([(s.depth_fsw, s.duration_min, s.gas) for s in profile.stops], [(70, 1, "air"), (60, 5, "air"), (50, 6, "air"), (40, 6, "air"), (30, 4, "o2"), (20, 32, "o2")])
+        self.assertEqual(profile.total_ascent_time_sec, 3860)
+
+    def test_air_210_fsw_profile_uses_new_manual_rows(self) -> None:
+        profile = build_profile(DecoMode.AIR, 210, 30)
+        self.assertEqual(profile.table_depth_fsw, 210)
+        self.assertEqual(profile.table_bottom_time_min, 30)
+        self.assertEqual(profile.time_to_first_stop_sec, 260)
+        self.assertEqual([(s.depth_fsw, s.duration_min, s.gas) for s in profile.stops], [(80, 2, "air"), (70, 5, "air"), (60, 6, "air"), (50, 6, "air"), (40, 6, "air"), (30, 26, "air"), (20, 163, "air")])
+        self.assertEqual(profile.repeat_group, "Z")
+
+    def test_air_o2_210_fsw_profile_uses_new_manual_rows(self) -> None:
+        profile = build_profile(DecoMode.AIR_O2, 210, 30)
+        self.assertEqual(profile.table_depth_fsw, 210)
+        self.assertEqual(profile.table_bottom_time_min, 30)
+        self.assertEqual(profile.time_to_first_stop_sec, 260)
+        self.assertEqual([(s.depth_fsw, s.duration_min, s.gas) for s in profile.stops], [(80, 2, "air"), (70, 5, "air"), (60, 6, "air"), (50, 6, "air"), (40, 6, "air"), (30, 13, "o2"), (20, 45, "o2")])
+        self.assertEqual(profile.total_ascent_time_sec, 5600)
+
+    def test_air_220_fsw_profile_uses_new_manual_rows(self) -> None:
+        profile = build_profile(DecoMode.AIR, 220, 25)
+        self.assertEqual(profile.table_depth_fsw, 220)
+        self.assertEqual(profile.table_bottom_time_min, 25)
+        self.assertEqual(profile.time_to_first_stop_sec, 280)
+        self.assertEqual([(s.depth_fsw, s.duration_min, s.gas) for s in profile.stops], [(80, 1, "air"), (70, 5, "air"), (60, 6, "air"), (50, 6, "air"), (40, 6, "air"), (30, 14, "air"), (20, 133, "air")])
+        self.assertEqual(profile.repeat_group, "Z")
+
+    def test_air_o2_220_fsw_profile_uses_new_manual_rows(self) -> None:
+        profile = build_profile(DecoMode.AIR_O2, 220, 25)
+        self.assertEqual(profile.table_depth_fsw, 220)
+        self.assertEqual(profile.table_bottom_time_min, 25)
+        self.assertEqual(profile.time_to_first_stop_sec, 280)
+        self.assertEqual([(s.depth_fsw, s.duration_min, s.gas) for s in profile.stops], [(80, 1, "air"), (70, 5, "air"), (60, 6, "air"), (50, 6, "air"), (40, 6, "air"), (30, 7, "o2"), (20, 41, "o2")])
+        self.assertEqual(profile.total_ascent_time_sec, 4960)
+
+    def test_air_250_fsw_profile_uses_new_manual_rows(self) -> None:
+        profile = build_profile(DecoMode.AIR, 250, 25)
+        self.assertEqual(profile.table_depth_fsw, 250)
+        self.assertEqual(profile.table_bottom_time_min, 25)
+        self.assertEqual(profile.time_to_first_stop_sec, 300)
+        self.assertEqual([(s.depth_fsw, s.duration_min, s.gas) for s in profile.stops], [(100, 1, "air"), (90, 4, "air"), (80, 4, "air"), (70, 5, "air"), (60, 6, "air"), (50, 6, "air"), (40, 10, "air"), (30, 28, "air"), (20, 189, "air")])
+        self.assertEqual(profile.total_ascent_time_sec, 15520)
+
+    def test_air_o2_250_fsw_profile_uses_new_manual_rows(self) -> None:
+        profile = build_profile(DecoMode.AIR_O2, 250, 25)
+        self.assertEqual(profile.table_depth_fsw, 250)
+        self.assertEqual(profile.table_bottom_time_min, 25)
+        self.assertEqual(profile.time_to_first_stop_sec, 300)
+        self.assertEqual([(s.depth_fsw, s.duration_min, s.gas) for s in profile.stops], [(100, 1, "air"), (90, 4, "air"), (80, 4, "air"), (70, 5, "air"), (60, 6, "air"), (50, 6, "air"), (40, 10, "air"), (30, 14, "o2"), (20, 51, "o2")])
+        self.assertEqual(profile.total_ascent_time_sec, 6720)
+
+    def test_air_300_fsw_profile_uses_new_manual_rows(self) -> None:
+        profile = build_profile(DecoMode.AIR, 300, 20)
+        self.assertEqual(profile.table_depth_fsw, 300)
+        self.assertEqual(profile.table_bottom_time_min, 20)
+        self.assertEqual(profile.time_to_first_stop_sec, 360)
+        self.assertEqual([(s.depth_fsw, s.duration_min, s.gas) for s in profile.stops], [(120, 2, "air"), (110, 2, "air"), (100, 2, "air"), (90, 4, "air"), (80, 5, "air"), (70, 5, "air"), (60, 5, "air"), (50, 6, "air"), (40, 16, "air"), (30, 28, "air"), (20, 219, "air")])
+        self.assertEqual(profile.total_ascent_time_sec, 18040)
+
+    def test_air_o2_300_fsw_profile_uses_new_manual_rows(self) -> None:
+        profile = build_profile(DecoMode.AIR_O2, 300, 20)
+        self.assertEqual(profile.table_depth_fsw, 300)
+        self.assertEqual(profile.table_bottom_time_min, 20)
+        self.assertEqual(profile.time_to_first_stop_sec, 360)
+        self.assertEqual([(s.depth_fsw, s.duration_min, s.gas) for s in profile.stops], [(120, 2, "air"), (110, 2, "air"), (100, 2, "air"), (90, 4, "air"), (80, 5, "air"), (70, 5, "air"), (60, 5, "air"), (50, 6, "air"), (40, 16, "air"), (30, 14, "o2"), (20, 59, "o2")])
+        self.assertEqual(profile.total_ascent_time_sec, 8220)
+
     def test_air_o2_assigns_oxygen_only_at_30_and_20(self) -> None:
         profile = build_profile(DecoMode.AIR_O2, 145, 39)
         gases = {stop.depth_fsw: stop.gas for stop in profile.stops}
