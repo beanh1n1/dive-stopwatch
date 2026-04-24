@@ -12,6 +12,7 @@ from typing import Literal
 class DecoMode(str, Enum):
     AIR = "AIR"
     AIR_O2 = "AIR/O2"
+    SURD = "SURD"
 
 
 class DelayOutcome(str, Enum):
@@ -50,6 +51,18 @@ class DiveProfile:
 
 
 @dataclass(frozen=True)
+class SurfaceProfile:
+    input_depth_fsw: int
+    input_bottom_time_min: int
+    table_depth_fsw: int
+    table_bottom_time_min: int
+    time_to_first_stop_sec: int | None
+    in_water_stops: tuple[ProfileStop, ...]
+    chamber_o2_half_periods: int | None
+    repeat_group: str | None
+
+
+@dataclass(frozen=True)
 class DelayResult:
     profile: DiveProfile
     delay_min: int
@@ -77,6 +90,7 @@ class TableRow:
     time_to_first_stop_sec: int | None
     stops: tuple[ProfileStop, ...]
     total_ascent_time_sec: int | None
+    chamber_o2_half_periods: int | None
     repeat_group: str | None
     is_no_decompression: bool
 
@@ -189,6 +203,26 @@ def no_decompression_limit(mode: DecoMode, depth_fsw: int) -> int | None:
     table_depth = _next_supported_depth(table, depth_fsw)
     limits = [bottom_time for bottom_time, row in table[table_depth].items() if row.is_no_decompression]
     return max(limits, default=None)
+
+
+def build_surface_profile(depth_fsw: int, bottom_time_min: int) -> SurfaceProfile:
+    if depth_fsw <= 0:
+        raise ValueError("Depth must be positive.")
+    if bottom_time_min <= 0:
+        raise ValueError("Bottom time must be positive.")
+    _ensure_loaded()
+
+    row = _lookup_row(DecoMode.AIR, depth_fsw, bottom_time_min)
+    return SurfaceProfile(
+        input_depth_fsw=depth_fsw,
+        input_bottom_time_min=bottom_time_min,
+        table_depth_fsw=row.depth_fsw,
+        table_bottom_time_min=row.bottom_time_min,
+        time_to_first_stop_sec=row.time_to_first_stop_sec,
+        in_water_stops=tuple(stop for stop in row.stops if stop.depth_fsw >= 40),
+        chamber_o2_half_periods=row.chamber_o2_half_periods,
+        repeat_group=row.repeat_group,
+    )
 
 
 def apply_first_stop_delay(
@@ -475,6 +509,7 @@ def _load_rows(mode: DecoMode) -> dict[int, dict[int, TableRow]]:
                     time_to_first_stop_sec=_parse_mmss(raw_row.get("time_to_first_stop")),
                     stops=_build_stops(mode, stop_minutes_by_depth),
                     total_ascent_time_sec=_parse_mmss(raw_row.get("total_ascent_time")),
+                    chamber_o2_half_periods=_parse_half_periods(raw_row.get("chamber_o2_periods")),
                     repeat_group=(raw_row.get("repeat_group", "").strip() or None),
                     is_no_decompression=not stop_minutes_by_depth,
                 )
@@ -488,6 +523,13 @@ def _parse_mmss(value: str | None) -> int | None:
         return None
     minutes_text, seconds_text = text.split(":", maxsplit=1)
     return (int(minutes_text) * 60) + int(seconds_text)
+
+
+def _parse_half_periods(value: str | None) -> int | None:
+    text = (value or "").strip()
+    if not text:
+        return None
+    return int(round(float(text) * 2))
 
 
 def _ceil_minutes(seconds: float) -> int:

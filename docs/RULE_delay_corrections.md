@@ -142,8 +142,8 @@ stop is delayed beyond expected travel timing.
   - rows requiring first stop deeper than `50 fsw`
   - AIR/O2 rows with O2 obligations at `30` and `20 fsw`
 - Related code paths:
-  - `src/dive_stopwatch/core/profiles.py`
-  - `src/dive_stopwatch/core/engine.py`
-  - `src/dive_stopwatch/core/snapshot.py`
+  - `src/dive_stopwatch/core/air_o2_profiles.py`
+  - `src/dive_stopwatch/core/air_o2_engine.py`
+  - `src/dive_stopwatch/core/air_o2_snapshot.py`
 - Related scenarios:
   - `SCENARIO_air_o2_150_40.md`

@@ -24,7 +24,7 @@ App status:
 - first O2 stop timing is anchored from `On O2`
 
 Relevant code:
-- [/Users/iananderson/projects/DiveStopwatchProject/src/dive_stopwatch/core/engine.py](/Users/iananderson/projects/DiveStopwatchProject/src/dive_stopwatch/core/engine.py)
+- [/Users/iananderson/projects/DiveStopwatchProject/src/dive_stopwatch/core/air_o2_engine.py](/Users/iananderson/projects/DiveStopwatchProject/src/dive_stopwatch/core/air_o2_engine.py)
 
 ### TSV timing
 Manual reference:
@@ -48,8 +48,8 @@ App status:
 - the `<= 35 min` terminal exception remains implemented
 
 Relevant code:
-- [/Users/iananderson/projects/DiveStopwatchProject/src/dive_stopwatch/core/engine.py](/Users/iananderson/projects/DiveStopwatchProject/src/dive_stopwatch/core/engine.py)
-- [/Users/iananderson/projects/DiveStopwatchProject/src/dive_stopwatch/core/snapshot.py](/Users/iananderson/projects/DiveStopwatchProject/src/dive_stopwatch/core/snapshot.py)
+- [/Users/iananderson/projects/DiveStopwatchProject/src/dive_stopwatch/core/air_o2_engine.py](/Users/iananderson/projects/DiveStopwatchProject/src/dive_stopwatch/core/air_o2_engine.py)
+- [/Users/iananderson/projects/DiveStopwatchProject/src/dive_stopwatch/core/air_o2_snapshot.py](/Users/iananderson/projects/DiveStopwatchProject/src/dive_stopwatch/core/air_o2_snapshot.py)
 
 ## Previously Missed Drift
 

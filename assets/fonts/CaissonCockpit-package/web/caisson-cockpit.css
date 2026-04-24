@@ -1,0 +1,9 @@
+@font-face {
+  font-family: "CaissonCockpit";
+  src:
+    url("../dist/CaissonCockpit-Regular.woff2") format("woff2"),
+    url("../dist/CaissonCockpit-Regular.ttf") format("truetype");
+  font-style: normal;
+  font-weight: 400;
+  font-display: swap;
+}

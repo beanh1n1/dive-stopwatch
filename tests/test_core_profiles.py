@@ -1,7 +1,7 @@
 from datetime import datetime, timedelta
 import unittest
 
-from dive_stopwatch.core.profiles import DecoMode, DelayOutcome, apply_between_stop_delay, apply_first_stop_delay, apply_oxygen_surface_delay, apply_oxygen_travel_delay, build_profile, convert_remaining_o2_to_air, first_stop_depth, next_stop_after, stop_by_index
+from dive_stopwatch.core.air_o2_profiles import DecoMode, DelayOutcome, apply_between_stop_delay, apply_first_stop_delay, apply_oxygen_surface_delay, apply_oxygen_travel_delay, build_profile, convert_remaining_o2_to_air, first_stop_depth, next_stop_after, stop_by_index
 
 
 class CoreProfilesTests(unittest.TestCase):

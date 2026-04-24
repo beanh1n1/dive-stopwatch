@@ -169,7 +169,7 @@ These rules apply whenever the app renders:
   - `docs/AIR.csv`
   - `docs/AIR_O2.csv`
 - Related code paths:
-  - `src/dive_stopwatch/core/snapshot.py`
+  - `src/dive_stopwatch/core/air_o2_snapshot.py`
   - `src/dive_stopwatch/mobile/gui.py`
 - Related scenarios:
   - `SCENARIO_air_o2_150_40.md`

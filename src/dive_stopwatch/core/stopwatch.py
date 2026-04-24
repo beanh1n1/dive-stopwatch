@@ -5,7 +5,7 @@ from datetime import datetime
 from typing import TYPE_CHECKING
 
 if TYPE_CHECKING:
-    from .snapshot import Snapshot
+    from .air_o2_snapshot import Snapshot
 
 
 @dataclass(frozen=True)
@@ -119,7 +119,7 @@ class StopwatchController:
         self.state = StopwatchState()
 
     def snapshot(self) -> "Snapshot":
-        from .snapshot import Snapshot
+        from .air_o2_snapshot import Snapshot
 
         now = self._now()
         status_text, primary_text, detail_text, button_fields = StopwatchRuntime.snapshot_fields(

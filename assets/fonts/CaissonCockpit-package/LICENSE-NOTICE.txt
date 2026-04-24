@@ -1,0 +1,3 @@
+CaissonCockpit is generated from a custom-edited DejaVu Sans Mono source.
+
+Keep the upstream DejaVu license with this package when redistributing it.

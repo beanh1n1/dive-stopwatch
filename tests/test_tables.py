@@ -3,7 +3,7 @@ import re
 from pathlib import Path
 import unittest
 
-from dive_stopwatch.core.profiles import DecoMode, DelayOutcome, apply_between_stop_delay, apply_first_stop_delay, build_profile, no_decompression_limit
+from dive_stopwatch.core.air_o2_profiles import DecoMode, DelayOutcome, apply_between_stop_delay, apply_first_stop_delay, build_profile, no_decompression_limit
 
 
 DOCS = Path(__file__).resolve().parents[1] / "docs"

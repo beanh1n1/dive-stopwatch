@@ -98,7 +98,7 @@ resume on O2, and the cutoff case where no further air break is required.
   - `RULE_display_and_timer_semantics.md`
   - `RULE_delay_corrections.md`
 - Related code paths:
-  - `src/dive_stopwatch/core/engine.py`
-  - `src/dive_stopwatch/core/snapshot.py`
+  - `src/dive_stopwatch/core/air_o2_engine.py`
+  - `src/dive_stopwatch/core/air_o2_snapshot.py`
 - Related tests:
   - `tests/test_core_engine.py`

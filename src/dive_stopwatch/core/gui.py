@@ -2,7 +2,8 @@ from __future__ import annotations
 
 import tkinter as tk
 
-from .engine import Engine, Intent
+from .air_o2_engine import Intent
+from .runtime import Engine
 
 
 class DiveStopwatchApp:

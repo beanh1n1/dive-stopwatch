@@ -1,8 +1,9 @@
 from datetime import datetime, timedelta
 import unittest
 
-from dive_stopwatch.core.engine import DivePhase, Engine, Intent
-from dive_stopwatch.core.profiles import DecoMode, DelayOutcome
+from dive_stopwatch.core.air_o2_engine import DivePhase, Intent
+from dive_stopwatch.core.runtime import Engine
+from dive_stopwatch.core.air_o2_profiles import DecoMode, DelayOutcome
 
 
 class CoreEngineTests(unittest.TestCase):
@@ -96,6 +97,10 @@ class CoreEngineTests(unittest.TestCase):
         self.assertEqual(engine.snapshot().mode_text, "AIR/O2")
 
         engine.dispatch(Intent.MODE)
+        self.assertEqual(engine.state.deco_mode, DecoMode.SURD)
+        self.assertEqual(engine.snapshot().mode_text, "SURD")
+
+        engine.dispatch(Intent.MODE)
         self.assertIsNone(engine.state.deco_mode)
         snap = engine.snapshot()
         self.assertEqual(snap.mode_text, "STOPWATCH")
@@ -125,6 +130,76 @@ class CoreEngineTests(unittest.TestCase):
         self.assertIsNone(engine.state.dive.current_stop_index)
         self.assertIsNone(engine.state.dive.active_delay)
         self.assertIsNone(engine.state.dive.last_delay_recompute)
+
+    def test_surd_mode_runs_as_air_until_40_then_hands_off(self) -> None:
+        current = {"now": datetime(2026, 4, 23, 12, 0, 0)}
+        engine = Engine(now_provider=lambda: current["now"])
+        engine.set_depth_text("150")
+        engine.dispatch(Intent.MODE)  # AIR
+        engine.dispatch(Intent.MODE)  # AIR/O2
+        engine.dispatch(Intent.MODE)  # SURD
+
+        self.assertEqual(engine.snapshot().mode_text, "SURD")
+
+        engine.dispatch(Intent.PRIMARY)  # LS
+        current["now"] += timedelta(minutes=3)
+        engine.dispatch(Intent.PRIMARY)  # RB
+        current["now"] += timedelta(minutes=42)
+        engine.dispatch(Intent.PRIMARY)  # LB
+        current["now"] += timedelta(minutes=3)
+        engine.dispatch(Intent.PRIMARY)  # R1 50
+        current["now"] += timedelta(minutes=3)
+        engine.dispatch(Intent.PRIMARY)  # L1
+        current["now"] += timedelta(minutes=2)
+        engine.dispatch(Intent.PRIMARY)  # R2 40
+
+        at_forty = engine.snapshot()
+        self.assertEqual(at_forty.mode_text, "SURD")
+        self.assertEqual(at_forty.depth_text, "40 fsw")
+        self.assertEqual(at_forty.summary_text, "Next: 40 fsw -> Surface")
+        self.assertEqual(at_forty.primary_button_label, "Leave Stop")
+
+        engine.dispatch(Intent.PRIMARY)  # L40 -> SurD handoff
+        handoff = engine.snapshot()
+
+        self.assertEqual(handoff.mode_text, "SURD")
+        self.assertEqual(handoff.status_text, "40 -> Surface")
+        self.assertEqual(handoff.status_value_text, "40 -> Surface")
+        self.assertEqual(handoff.depth_text, "40 fsw")
+        self.assertEqual(handoff.depth_timer_text, "05:00 left")
+        self.assertEqual(handoff.summary_text, "Next: Undress")
+        self.assertEqual(handoff.primary_button_label, "Reach Surface")
+        self.assertTrue(handoff.primary_text.startswith("00:00"))
+        self.assertIn("SurD start from 40 fsw 12:53:00", engine.recall_lines())
+
+    def test_surd_surface_interval_overdue_turns_primary_and_line4_red(self) -> None:
+        current = {"now": datetime(2026, 4, 23, 12, 0, 0)}
+        engine = Engine(now_provider=lambda: current["now"])
+        engine.set_depth_text("150")
+        engine.dispatch(Intent.MODE)  # AIR
+        engine.dispatch(Intent.MODE)  # AIR/O2
+        engine.dispatch(Intent.MODE)  # SURD
+
+        engine.dispatch(Intent.PRIMARY)  # LS
+        current["now"] += timedelta(minutes=3)
+        engine.dispatch(Intent.PRIMARY)  # RB
+        current["now"] += timedelta(minutes=42)
+        engine.dispatch(Intent.PRIMARY)  # LB
+        current["now"] += timedelta(minutes=3)
+        engine.dispatch(Intent.PRIMARY)  # R1 50
+        current["now"] += timedelta(minutes=3)
+        engine.dispatch(Intent.PRIMARY)  # L1
+        current["now"] += timedelta(minutes=2)
+        engine.dispatch(Intent.PRIMARY)  # R2 40
+        engine.dispatch(Intent.PRIMARY)  # L40 -> handoff
+
+        current["now"] += timedelta(minutes=5, seconds=10)
+        snap = engine.snapshot()
+
+        self.assertEqual(snap.primary_value_kind, "warning")
+        self.assertEqual(snap.depth_timer_text, "+00:10")
+        self.assertEqual(snap.depth_timer_kind, "warning")
+        self.assertEqual(snap.summary_text, "Next: Chamber 50 with penalty")
 
     def test_first_stop_recompute_persists_updated_profile_through_arrival(self) -> None:
         current = {"now": datetime(2026, 4, 19, 11, 6, 13)}
@@ -414,6 +489,18 @@ class CoreEngineTests(unittest.TestCase):
         descent = engine.snapshot()
         self.assertEqual(descent.status_text, "DESCENT")
         self.assertEqual(descent.summary_text, "Next: --")
+
+    def test_depths_over_300_fsw_are_rejected_at_input(self) -> None:
+        current = {"now": datetime(2026, 4, 12, 12, 0, 0)}
+        engine = Engine(now_provider=lambda: current["now"])
+        engine.dispatch(Intent.MODE)  # AIR
+        engine.set_depth_text("301")
+
+        ready = engine.snapshot()
+
+        self.assertEqual(ready.status_text, "READY")
+        self.assertEqual(ready.depth_text, "Max -- fsw")
+        self.assertEqual(ready.summary_text, "Depth not supported")
 
     def test_first_o2_confirmation_uses_secondary_at_first_o2_stop(self) -> None:
         current = {"now": datetime(2026, 4, 12, 12, 0, 0)}
@@ -798,6 +885,45 @@ class CoreEngineTests(unittest.TestCase):
         self.assertEqual(snap.depth_timer_text, "07:40 left")
         self.assertEqual(snap.remaining_text, "")
         self.assertEqual(snap.summary_text, "Next: 30 fsw for 12 min")
+
+    def test_travel_after_first_stop_counts_down_next_stop_obligation(self) -> None:
+        current = {"now": datetime(2026, 4, 23, 14, 4, 18)}
+        engine = Engine(now_provider=lambda: current["now"])
+        engine.set_depth_text("190")
+        engine.dispatch(Intent.MODE)  # AIR
+        engine.dispatch(Intent.PRIMARY)  # LS
+        current["now"] = datetime(2026, 4, 23, 14, 7, 22)
+        engine.dispatch(Intent.PRIMARY)  # RB
+        current["now"] = datetime(2026, 4, 23, 14, 17, 29)
+        engine.dispatch(Intent.PRIMARY)  # LB
+        current["now"] = datetime(2026, 4, 23, 14, 22, 34)
+        engine.dispatch(Intent.PRIMARY)  # R1 50
+        current["now"] = datetime(2026, 4, 23, 14, 23, 37)
+        engine.dispatch(Intent.PRIMARY)  # L1
+
+        snap = engine.snapshot()
+
+        self.assertEqual(engine.state.dive.phase, DivePhase.TRAVEL)
+        self.assertEqual(snap.summary_text, "Next: 30 fsw for 3 min")
+        self.assertEqual(snap.depth_timer_text, "03:00 left")
+
+    def test_first_stop_overtime_counts_up_only_after_planned_time_to_first_stop_exceeded(self) -> None:
+        current = {"now": datetime(2026, 4, 23, 12, 0, 0)}
+        engine = Engine(now_provider=lambda: current["now"])
+        engine.set_depth_text("150")
+        engine.dispatch(Intent.MODE)  # AIR
+        engine.dispatch(Intent.PRIMARY)  # LS
+        current["now"] += timedelta(minutes=3)
+        engine.dispatch(Intent.PRIMARY)  # RB
+        current["now"] += timedelta(minutes=42)
+        engine.dispatch(Intent.PRIMARY)  # LB
+
+        before_due = engine.snapshot()
+        self.assertEqual(before_due.depth_timer_text, "")
+
+        current["now"] += timedelta(minutes=10)
+        overdue = engine.snapshot()
+        self.assertTrue(overdue.depth_timer_text.startswith("+"))
 
     def test_reentering_same_depth_before_travel_action_does_not_surface(self) -> None:
         current = {"now": datetime(2026, 4, 12, 10, 1, 5)}

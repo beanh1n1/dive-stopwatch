@@ -48,4 +48,4 @@ Pin down the exact acceptance boundary for continuous O2 exposure reaching
   - `RULE_core_definitions.md`
   - `RULE_display_and_timer_semantics.md`
 - Related code paths:
-  - `src/dive_stopwatch/core/engine.py`
+  - `src/dive_stopwatch/core/air_o2_engine.py`

@@ -123,3 +123,17 @@ dive-stopwatch-mobile
 ```bash
 python3 -m pytest -q
 ```
+
+## Font Assets
+
+The standard cockpit font is:
+
+- `/Users/iananderson/projects/DiveStopwatchProject/assets/fonts/CaissonCockpit.ttf`
+
+Its packaged distribution is:
+
+- `/Users/iananderson/projects/DiveStopwatchProject/assets/fonts/CaissonCockpit-package`
+
+The editable FontForge source for that font is:
+
+- `/Users/iananderson/projects/DiveStopwatchProject/assets/fonts/CaissonCockpit-Regular.sfd`

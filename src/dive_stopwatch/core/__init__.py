@@ -1,8 +1,9 @@
 """Core runtime package for the dive stopwatch application."""
 
-from .engine import Engine, Intent
-from .profiles import DecoMode, DiveProfile, ProfileStop, build_profile
-from .snapshot import Snapshot
+from .air_o2_engine import Intent
+from .air_o2_profiles import DecoMode, DiveProfile, ProfileStop, build_profile
+from .air_o2_snapshot import Snapshot
+from .runtime import Engine
 
 
 def main() -> None:

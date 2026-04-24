@@ -4,11 +4,11 @@ from dataclasses import dataclass
 from datetime import datetime
 from typing import TYPE_CHECKING
 
-from .profiles import DiveProfile, build_profile, next_stop_after, no_decompression_limit, stop_by_index
-from .profiles import DelayOutcome
+from .air_o2_profiles import DiveProfile, build_profile, next_stop_after, no_decompression_limit, stop_by_index
+from .air_o2_profiles import DelayOutcome
 
 if TYPE_CHECKING:
-    from .engine import EngineState
+    from .air_o2_engine import EngineState
 
 
 CLEAN_TIME_SEC = 10 * 60
@@ -38,7 +38,7 @@ class Snapshot:
 
 
 def create_snapshot(state: EngineState, now: datetime) -> Snapshot:
-    from . import engine as eng
+    from . import air_o2_engine as eng
 
     phase = state.dive.phase
     view = eng._dive_view(state, now)
@@ -76,9 +76,13 @@ def create_snapshot(state: EngineState, now: datetime) -> Snapshot:
         depth_timer_text = _o2_travel_stop_remaining_text(state, now, view.profile)
         depth_timer_kind = "o2" if depth_timer_text else "default"
     else:
-        travel_remaining = _travel_remaining_text(state, now, view.profile)
-        if travel_remaining is not None and not view.traveling_to_o2:
-            depth_timer_text = travel_remaining
+        carried_next_stop = _carried_next_stop_remaining_text(state, now, view.profile)
+        first_stop_overtime = _first_stop_overtime_text(state, now, view.profile)
+        if carried_next_stop is not None and not view.traveling_to_o2:
+            depth_timer_text = carried_next_stop
+            depth_timer_kind = "default"
+        elif first_stop_overtime is not None and not view.traveling_to_o2:
+            depth_timer_text = first_stop_overtime
             depth_timer_kind = "default"
         elif bottom_depth_timer_text:
             depth_timer_text = bottom_depth_timer_text
@@ -222,6 +226,8 @@ def _build_summary_text(eng, state: EngineState, phase, clean_remaining: float |
     if phase is eng.DivePhase.SURFACE:
         return ""
     if phase is eng.DivePhase.READY:
+        if state.dive.depth_input_text.strip() and view.depth is None:
+            return "Depth not supported"
         preview = _ready_no_decompression_preview(eng, state, view)
         return preview if preview is not None else "Next: --"
     if phase is eng.DivePhase.BOTTOM and view.depth is None:
@@ -284,26 +290,42 @@ def _build_dive_button_fields(eng, state: EngineState, phase, view, active_break
     return "Leave Stop", secondary_label, True, bool(secondary_label)
 
 
-def _travel_remaining_text(state: EngineState, now: datetime, profile: DiveProfile | None) -> str | None:
-    from . import engine as eng
+def _first_stop_overtime_text(state: EngineState, now: datetime, profile: DiveProfile | None) -> str | None:
+    from . import air_o2_engine as eng
 
-    if state.dive.phase is not eng.DivePhase.TRAVEL or profile is None or state.dive.current_stop_index is None:
+    if state.dive.phase is not eng.DivePhase.TRAVEL or profile is None or state.dive.current_stop_index is not None:
         return None
-    current_stop = stop_by_index(profile, state.dive.current_stop_index)
-    next_stop = next_stop_after(profile, state.dive.current_stop_index)
-    if current_stop is None or next_stop is None:
+    planned_elapsed_sec = profile.time_to_first_stop_sec
+    if planned_elapsed_sec is None:
         return None
     anchor_event = eng._travel_anchor_event(state)
     if anchor_event is None:
         return None
-    planned_elapsed_sec = int(abs(current_stop.depth_fsw - next_stop.depth_fsw) * 2)
     elapsed_sec = eng._travel_progress_seconds(state, now, anchor_event.timestamp)
-    remaining_sec = max(planned_elapsed_sec - elapsed_sec, 0.0)
+    overtime_sec = elapsed_sec - planned_elapsed_sec
+    if overtime_sec <= 0:
+        return None
+    return f"+{eng.format_mmss(overtime_sec)}"
+
+
+def _carried_next_stop_remaining_text(state: EngineState, now: datetime, profile: DiveProfile | None) -> str | None:
+    from . import air_o2_engine as eng
+
+    if state.dive.phase is not eng.DivePhase.TRAVEL or profile is None or state.dive.current_stop_index is None:
+        return None
+    next_stop = next_stop_after(profile, state.dive.current_stop_index)
+    if next_stop is None:
+        return None
+    anchor_event = eng._travel_anchor_event(state)
+    if anchor_event is None:
+        return None
+    elapsed_sec = eng._travel_progress_seconds(state, now, anchor_event.timestamp)
+    remaining_sec = max((next_stop.duration_min * 60) - elapsed_sec, 0.0)
     return f"{int(remaining_sec // 60):02d}:{int(remaining_sec % 60):02d} left"
 
 
 def _o2_travel_stop_remaining_text(state: EngineState, now: datetime, profile: DiveProfile | None) -> str | None:
-    from . import engine as eng
+    from . import air_o2_engine as eng
 
     if state.dive.phase is not eng.DivePhase.TRAVEL or profile is None or state.dive.current_stop_index is None:
         return None
@@ -320,7 +342,7 @@ def _o2_travel_stop_remaining_text(state: EngineState, now: datetime, profile: D
 
 
 def _transfer_surface_interval_anchor(state: EngineState):
-    from . import engine as eng
+    from . import air_o2_engine as eng
 
     if state.dive.current_stop_index is None:
         return eng.find_latest_event(state.dive.events, "LB")

@@ -6,12 +6,15 @@ from pathlib import Path
 import flet as ft
 
 from ..core import Engine, Intent
-from ..core.engine import DivePhase
+from ..core.air_o2_engine import DivePhase
 
 
 class MobileDiveStopwatchApp:
     O2_COLOR = ft.Colors.GREEN_700
     AIR_BREAK_COLOR = ft.Colors.RED_700
+    WARNING_COLOR = ft.Colors.ORANGE_700
+    SURD_TRAVEL_COLOR = "#5DA9FF"
+    SURD_GLOW = "#0E2742"
     MODE_AIR_O2_ACCENT = "#2DE3A0"
     MODE_AIR_O2_GLOW = "#11392B"
     DEFAULT_TEXT_COLOR = ft.Colors.WHITE
@@ -428,8 +431,8 @@ class MobileDiveStopwatchApp:
         self.test_time_text.color = self.MUTED_TEXT_COLOR
         self.recall_timer_text.color = self.AIR_BREAK_COLOR if snap.status_value_kind == "off_o2" else self._kind_color(snap.primary_value_kind)
         self.summary_prefix_text.color = self.DEFAULT_TEXT_COLOR
-        self.summary_value_text.color = self.O2_COLOR if snap.summary_value_kind == "o2" and self.summary_prefix_text.visible else self.DEFAULT_TEXT_COLOR
-        self.summary_text.color = self.DEFAULT_TEXT_COLOR
+        self.summary_value_text.color = self._kind_color(snap.summary_value_kind) if self.summary_prefix_text.visible else self.DEFAULT_TEXT_COLOR
+        self.summary_text.color = self._kind_color(snap.summary_value_kind)
 
     def _apply_button_styles(self, snap) -> None:
         default_primary = ft.ButtonStyle(
@@ -452,45 +455,30 @@ class MobileDiveStopwatchApp:
             text_style=ft.TextStyle(size=16, weight=ft.FontWeight.W_700, font_family=self.INSTRUMENT_FONT),
         )
         self.primary_button.style = default_primary
-        if snap.secondary_button_label == "On O2":
-            self.secondary_button.style = ft.ButtonStyle(
-                side=ft.BorderSide(2, self.O2_COLOR),
-                shape=ft.RoundedRectangleBorder(radius=14),
-                color=self.O2_COLOR,
-                bgcolor=self.BUTTON_SURFACE,
-                padding=ft.padding.symmetric(vertical=14, horizontal=16),
-                shadow_color=self.BUTTON_SHADOW,
-                elevation=4,
-                text_style=ft.TextStyle(size=16, weight=ft.FontWeight.W_700, font_family=self.INSTRUMENT_FONT),
-            )
-            return
-        self.secondary_button.style = default_secondary
+        self.secondary_button.style = self._secondary_button_style(snap.secondary_button_label, default_secondary)
 
     def _render_mode_tile(self, mode_text: str) -> None:
-        is_air_o2 = mode_text == "AIR/O2"
+        theme = self._mode_chip_theme(mode_text)
         is_stopwatch = mode_text == "STOPWATCH"
         self.mode_label_text.value = mode_text
         self.mode_label_text.color = self.PRIMARY_BUTTON_TEXT
         self.mode_label_chip.bgcolor = self.PRIMARY_BUTTON_BG if not is_stopwatch else "#252E37"
-        self.mode_label_chip.border = ft.border.all(
-            1,
-            self.MODE_AIR_O2_ACCENT if is_air_o2 else self.OUTLINE_ACCENT if not is_stopwatch else self.CARD_BORDER,
-        )
+        self.mode_label_chip.border = ft.border.all(1, theme["border"])
         self.mode_label_chip.shadow = ft.BoxShadow(
             spread_radius=0,
-            blur_radius=14 if is_air_o2 else 10,
-            color=self.MODE_AIR_O2_GLOW if is_air_o2 else self.BUTTON_SHADOW,
+            blur_radius=theme["blur_radius"],
+            color=theme["glow"],
             offset=ft.Offset(0, 4),
         )
 
     def _render_summary(self, snap) -> None:
-        text = snap.summary_text
-        if text.startswith("Next: "):
+        prefix, value, plain = self._summary_parts(snap.summary_text)
+        if prefix is not None:
             self.summary_prefix_text.visible = True
-            self.summary_prefix_text.value = "Next: "
+            self.summary_prefix_text.value = prefix
             self.summary_value_text.visible = True
-            self.summary_value_text.value = text.removeprefix("Next: ")
-            self.summary_value_text.italic = text == "Next: Input Max Depth for table/schedule"
+            self.summary_value_text.value = value
+            self.summary_value_text.italic = snap.summary_text == "Next: Input Max Depth for table/schedule"
             self.summary_text.visible = False
             self.summary_text.value = ""
             self.summary_text.italic = False
@@ -501,17 +489,62 @@ class MobileDiveStopwatchApp:
         self.summary_value_text.value = ""
         self.summary_value_text.italic = False
         self.summary_text.visible = True
-        self.summary_text.value = text
-        self.summary_text.italic = text == "Next: Input Max Depth for table/schedule"
+        self.summary_text.value = plain
+        self.summary_text.italic = snap.summary_text == "Next: Input Max Depth for table/schedule"
 
     def _kind_color(self, kind: str) -> str:
-        if kind == "o2":
-            return self.O2_COLOR
-        if kind == "air_break":
-            return self.AIR_BREAK_COLOR
-        if kind == "off_o2":
-            return self.DEFAULT_TEXT_COLOR
-        return self.DEFAULT_TEXT_COLOR
+        return {
+            "default": self.DEFAULT_TEXT_COLOR,
+            "o2": self.O2_COLOR,
+            "warning": self.WARNING_COLOR,
+            "air_break": self.AIR_BREAK_COLOR,
+            "surd_travel": self.SURD_TRAVEL_COLOR,
+            "off_o2": self.DEFAULT_TEXT_COLOR,
+        }.get(kind, self.DEFAULT_TEXT_COLOR)
+
+    def _mode_chip_theme(self, mode_text: str) -> dict[str, str | int]:
+        if mode_text == "AIR/O2":
+            return {
+                "border": self.MODE_AIR_O2_ACCENT,
+                "glow": self.MODE_AIR_O2_GLOW,
+                "blur_radius": 14,
+            }
+        if mode_text == "SURD":
+            return {
+                "border": self.SURD_TRAVEL_COLOR,
+                "glow": self.SURD_GLOW,
+                "blur_radius": 14,
+            }
+        if mode_text == "STOPWATCH":
+            return {
+                "border": self.CARD_BORDER,
+                "glow": self.BUTTON_SHADOW,
+                "blur_radius": 10,
+            }
+        return {
+            "border": self.OUTLINE_ACCENT,
+            "glow": self.BUTTON_SHADOW,
+            "blur_radius": 10,
+        }
+
+    def _secondary_button_style(self, label: str, default_style: ft.ButtonStyle) -> ft.ButtonStyle:
+        if label != "On O2":
+            return default_style
+        return ft.ButtonStyle(
+            side=ft.BorderSide(2, self.O2_COLOR),
+            shape=ft.RoundedRectangleBorder(radius=14),
+            color=self.O2_COLOR,
+            bgcolor=self.BUTTON_SURFACE,
+            padding=ft.padding.symmetric(vertical=14, horizontal=16),
+            shadow_color=self.BUTTON_SHADOW,
+            elevation=4,
+            text_style=ft.TextStyle(size=16, weight=ft.FontWeight.W_700, font_family=self.INSTRUMENT_FONT),
+        )
+
+    def _summary_parts(self, text: str) -> tuple[str | None, str, str]:
+        if text.startswith("Next: "):
+            return "Next: ", text.removeprefix("Next: "), ""
+        return None, "", text
 
     def _card(self, content: ft.Control, *, emphasized: bool = False, expand: bool = False, compact: bool = False) -> ft.Container:
         return ft.Container(
