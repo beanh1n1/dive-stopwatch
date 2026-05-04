@@ -1,54 +1,51 @@
 # Dive Stopwatch Project
 
-This repo contains the live `dive-stopwatch` runtime and a parallel Flet mobile UI for supervising decompression procedures.
+This repo contains the active `engine_v2` runtime and its Flet mobile GUI. Preserved pre-`engine_v2` runtime/UI code lives under `archive/` for reference only and is not part of the active app path.
 
 ## What Is Live
 
-- `src/dive_stopwatch/core/`
-  - current runtime
-  - stopwatch runtime
-  - desktop GUI
-- `src/dive_stopwatch/mobile/`
-  - Flet mobile GUI
-- `docs/AIR.csv` and `docs/AIR_O2.csv`
+- `src/dive_stopwatch/engine_v2/`
+  - current runtime under active development
+- `src/dive_stopwatch/mobile/gui_v2.py`
+  - current Flet mobile GUI for `engine_v2`
+- `src/dive_stopwatch/engine_v2/domain/air_o2_profiles.py`
+  - active AIR/AIR_O2 profile and table logic
+- `docs/Tables/`
   - source table data used by the runtime
 - `tests/`
   - active regression, parity, and table-validation suites
+- `archive/legacy_runtime/`
+  - preserved legacy runtime/UI package and legacy-only tests
 
 ## Source Of Truth
 
 The governing authority for decompression behavior is:
 
-1. [docs/US DIVING MANUAL_REV7_ChangeA-6.6.18_AIR_Decompression_Operations.pdf](/Users/iananderson/projects/DiveStopwatchProject/docs/US%20DIVING%20MANUAL_REV7_ChangeA-6.6.18_AIR_Decompression_Operations.pdf)
-2. [docs/SOURCE_OF_TRUTH.md](/Users/iananderson/projects/DiveStopwatchProject/docs/SOURCE_OF_TRUTH.md)
-3. [docs/RULE_TRACEABILITY_MATRIX.md](/Users/iananderson/projects/DiveStopwatchProject/docs/RULE_TRACEABILITY_MATRIX.md)
-4. rule and scenario docs in `docs/`
+1. [docs/Source Truth/AIR_Decompression_Operations_US DIVING MANUAL_REV7_ChangeA-6.6.18.pdf](/Users/iananderson/projects/DiveStopwatchProject/docs/Source%20Truth/AIR_Decompression_Operations_US%20DIVING%20MANUAL_REV7_ChangeA-6.6.18.pdf)
+2. [docs/Source Truth/SOURCE_OF_TRUTH.md](/Users/iananderson/projects/DiveStopwatchProject/docs/Source%20Truth/SOURCE_OF_TRUTH.md)
+3. [docs/Rules/RULE_TRACEABILITY_MATRIX.md](/Users/iananderson/projects/DiveStopwatchProject/docs/Rules/RULE_TRACEABILITY_MATRIX.md)
+4. rule and scenario docs under `docs/Rules/` and `docs/Scenerios/`
 5. tests
 6. code
 
 If docs, tests, or code disagree with the manual chapter, the manual wins.
 
-## Run The Desktop App
-
-From project root:
-
-```bash
-PYTHONPATH=src python3 -m dive_stopwatch.core
-```
-
-Or after editable install:
-
-```bash
-python3 -m pip install -e .
-dive-stopwatch
-```
-
-## Run The Mobile GUI
+## Run The App
 
 ```bash
 python3 -m pip install -e ".[mobile]"
+dive-stopwatch
 dive-stopwatch-mobile
 ```
+
+Both commands launch the active `engine_v2` Flet shell with dedicated tiles for:
+
+- `AIR`
+- `AIR/O2`
+- `AIR/SURD`
+- `Mixed Gas`
+- `Mixed/SURD`
+- `CHAMBER`
 
 ## Install From GitHub
 
@@ -90,14 +87,7 @@ source .venv/bin/activate
 
 ### 5. Install the app
 
-Desktop app only:
-
-```bash
-python3 -m pip install --upgrade pip
-python3 -m pip install -e .
-```
-
-Desktop + mobile GUI:
+Install the app:
 
 ```bash
 python3 -m pip install --upgrade pip
@@ -105,14 +95,6 @@ python3 -m pip install -e ".[mobile]"
 ```
 
 ### 6. Run the app
-
-Desktop:
-
-```bash
-dive-stopwatch
-```
-
-Mobile GUI:
 
 ```bash
 dive-stopwatch-mobile
@@ -123,6 +105,12 @@ dive-stopwatch-mobile
 ```bash
 python3 -m pytest -q
 ```
+
+The highest-signal active suites are:
+
+- `tests/engine_v2/`
+- `tests/test_tables.py`
+- `tests/test_core_profiles.py`
 
 ## Font Assets
 

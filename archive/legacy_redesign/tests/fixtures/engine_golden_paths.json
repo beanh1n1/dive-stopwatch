@@ -1,0 +1,650 @@
+[
+  {
+    "id": "GP-AIR-ND-001",
+    "mode": "AIR",
+    "depth_text": "60",
+    "start_time": "2026-04-11T12:00:00",
+    "steps": [
+      {
+        "advance_sec": 0,
+        "intent": "PRIMARY",
+        "expect": {
+          "snapshot": {
+            "mode_text": "AIR",
+            "status_text": "DESCENT"
+          },
+          "state_phase": "DESCENT",
+          "recall_contains": ["LS "]
+        }
+      },
+      {
+        "advance_sec": 120,
+        "intent": "PRIMARY",
+        "expect": {
+          "snapshot": {
+            "status_text": "BOTTOM"
+          },
+          "state_phase": "BOTTOM",
+          "recall_contains": ["RB "]
+        }
+      },
+      {
+        "advance_sec": 600,
+        "intent": "PRIMARY",
+        "expect": {
+          "snapshot": {
+            "status_text": "TRAVELING",
+            "summary_text": "Next: Surface"
+          },
+          "state_phase": "TRAVEL",
+          "recall_contains": ["LB "]
+        }
+      },
+      {
+        "advance_sec": 60,
+        "intent": "PRIMARY",
+        "expect": {
+          "snapshot": {
+            "status_text": "CLEAN TIME",
+            "primary_text": "10:00",
+            "summary_text": ""
+          },
+          "state_phase": "SURFACE",
+          "recall_contains": ["RS "]
+        }
+      }
+    ]
+  },
+  {
+    "id": "GP-AIR-DECO-001",
+    "mode": "AIR",
+    "depth_text": "78",
+    "start_time": "2026-04-12T12:00:00",
+    "steps": [
+      {
+        "advance_sec": 0,
+        "intent": "PRIMARY"
+      },
+      {
+        "advance_sec": 180,
+        "intent": "PRIMARY"
+      },
+      {
+        "advance_sec": 2820,
+        "intent": "PRIMARY",
+        "expect": {
+          "snapshot": {
+            "status_text": "TRAVELING",
+            "summary_text": "Next: 20 fsw for 17 min"
+          },
+          "state_phase": "TRAVEL",
+          "recall_contains": ["LB "]
+        }
+      },
+      {
+        "advance_sec": 180,
+        "intent": "PRIMARY",
+        "expect": {
+          "snapshot": {
+            "status_text": "AT STOP",
+            "depth_text": "20 fsw",
+            "depth_timer_text": "17:00 left",
+            "summary_text": "Next: Surface"
+          },
+          "state_phase": "AT_STOP",
+          "recall_contains": ["R1 "]
+        }
+      },
+      {
+        "advance_sec": 20,
+        "intent": "PRIMARY",
+        "expect": {
+          "snapshot": {
+            "status_text": "TRAVELING",
+            "summary_text": "Next: Surface"
+          },
+          "state_phase": "TRAVEL",
+          "recall_contains": ["L1 "]
+        }
+      },
+      {
+        "advance_sec": 0,
+        "intent": "PRIMARY",
+        "expect": {
+          "snapshot": {
+            "status_text": "CLEAN TIME",
+            "primary_text": "10:00",
+            "depth_text": "80 / 50 M",
+            "summary_text": ""
+          },
+          "state_phase": "SURFACE",
+          "recall_contains": ["RS "]
+        }
+      }
+    ]
+  },
+  {
+    "id": "GP-AIR-O2-MIXED-001",
+    "mode": "AIR/O2",
+    "depth_text": "145",
+    "start_time": "2026-04-12T12:00:00",
+    "steps": [
+      {
+        "advance_sec": 0,
+        "intent": "PRIMARY"
+      },
+      {
+        "advance_sec": 180,
+        "intent": "PRIMARY"
+      },
+      {
+        "advance_sec": 2340,
+        "intent": "PRIMARY"
+      },
+      {
+        "advance_sec": 180,
+        "intent": "PRIMARY",
+        "expect": {
+          "snapshot": {
+            "status_text": "AT STOP",
+            "depth_text": "50 fsw",
+            "primary_text": "00:00.0",
+            "summary_text": "Next: 40 fsw for 8 min"
+          },
+          "recall_contains": ["R1 "]
+        }
+      },
+      {
+        "advance_sec": 0,
+        "intent": "PRIMARY"
+      },
+      {
+        "advance_sec": 120,
+        "intent": "PRIMARY",
+        "expect": {
+          "snapshot": {
+            "status_text": "AT STOP",
+            "depth_text": "40 fsw",
+            "primary_text": "02:00.0",
+            "summary_text": "Next: 30 fsw for 12 min"
+          },
+          "recall_contains": ["R2 "]
+        }
+      },
+      {
+        "advance_sec": 0,
+        "intent": "PRIMARY"
+      },
+      {
+        "advance_sec": 360,
+        "intent": "PRIMARY",
+        "expect": {
+          "snapshot": {
+            "status_text": "AT O2 STOP",
+            "status_value_text": "TSV",
+            "depth_text": "30 fsw",
+            "primary_text": "TSV 06:00.0",
+            "summary_text": "Next: 20 fsw for 40 min"
+          },
+          "recall_contains": ["R3 "]
+        }
+      },
+      {
+        "advance_sec": 0,
+        "intent": "SECONDARY",
+        "expect": {
+          "snapshot": {
+            "status_text": "AT O2 STOP",
+            "status_value_text": "On O2",
+            "primary_text": "00:00.0",
+            "summary_text": "Next: 20 fsw for 40 min",
+            "secondary_button_label": "Off O2"
+          },
+          "recall_contains": ["On O2 "]
+        }
+      },
+      {
+        "advance_sec": 840,
+        "intent": "PRIMARY"
+      },
+      {
+        "advance_sec": 120,
+        "intent": "PRIMARY",
+        "expect": {
+          "snapshot": {
+            "status_text": "AT O2 STOP",
+            "status_value_text": "On O2",
+            "depth_text": "20 fsw",
+            "primary_text": "02:00.0",
+            "summary_text": "Next: Air break in 14:00"
+          },
+          "recall_contains": ["R4 "]
+        }
+      }
+    ]
+  },
+  {
+    "id": "GP-AIR-O2-DIRECT-001",
+    "mode": "AIR/O2",
+    "depth_text": "120",
+    "start_time": "2026-04-12T12:00:00",
+    "steps": [
+      {
+        "advance_sec": 0,
+        "intent": "PRIMARY"
+      },
+      {
+        "advance_sec": 180,
+        "intent": "PRIMARY"
+      },
+      {
+        "advance_sec": 3420,
+        "intent": "PRIMARY"
+      },
+      {
+        "advance_sec": 20,
+        "expect": {
+          "snapshot": {
+            "status_text": "TRAVELING",
+            "status_value_text": "Traveling"
+          }
+        }
+      },
+      {
+        "advance_sec": 0,
+        "intent": "PRIMARY",
+        "expect": {
+          "snapshot": {
+            "status_text": "AT O2 STOP",
+            "secondary_button_label": "On O2"
+          },
+          "recall_contains": ["R1 "]
+        }
+      },
+      {
+        "advance_sec": 20,
+        "expect": {
+          "snapshot": {
+            "status_text": "AT O2 STOP",
+            "primary_text": "TSV 00:20.0"
+          }
+        }
+      },
+      {
+        "advance_sec": 0,
+        "intent": "SECONDARY",
+        "expect": {
+          "snapshot": {
+            "status_text": "AT O2 STOP",
+            "status_value_text": "On O2"
+          },
+          "recall_contains": ["On O2 "]
+        }
+      }
+    ]
+  },
+  {
+    "id": "GP-AIR-O2-BREAK30-001",
+    "mode": "AIR/O2",
+    "depth_text": "190",
+    "start_time": "2026-04-12T12:00:00",
+    "steps": [
+      {"advance_sec": 0, "intent": "PRIMARY"},
+      {"advance_sec": 180, "intent": "PRIMARY"},
+      {"advance_sec": 5400, "intent": "PRIMARY"},
+      {"advance_sec": 200, "intent": "PRIMARY"},
+      {"advance_sec": 660, "intent": "PRIMARY"},
+      {"advance_sec": 20, "intent": "PRIMARY"},
+      {"advance_sec": 1140, "intent": "PRIMARY"},
+      {"advance_sec": 20, "intent": "PRIMARY"},
+      {"advance_sec": 1200, "intent": "PRIMARY"},
+      {"advance_sec": 20, "intent": "PRIMARY"},
+      {"advance_sec": 1260, "intent": "PRIMARY"},
+      {"advance_sec": 20, "intent": "PRIMARY"},
+      {"advance_sec": 1680, "intent": "PRIMARY"},
+      {"advance_sec": 20, "intent": "PRIMARY"},
+      {"advance_sec": 3060, "intent": "PRIMARY"},
+      {"advance_sec": 20, "intent": "PRIMARY"},
+      {"advance_sec": 3300, "intent": "PRIMARY"},
+      {"advance_sec": 20, "intent": "PRIMARY"},
+      {"advance_sec": 0, "intent": "SECONDARY"},
+      {
+        "advance_sec": 1799,
+        "expect": {
+          "snapshot": {
+            "depth_text": "30 fsw",
+            "summary_text": "Next: Air break in 00:01",
+            "secondary_button_label": "Off O2"
+          }
+        }
+      },
+      {
+        "advance_sec": 1,
+        "expect": {
+          "snapshot": {
+            "depth_text": "30 fsw",
+            "summary_text": "Next: Air break in 00:00",
+            "secondary_button_label": "Off O2"
+          }
+        }
+      }
+    ]
+  },
+  {
+    "id": "GP-AIR-O2-BREAK20-001",
+    "mode": "AIR/O2",
+    "depth_text": "120",
+    "start_time": "2026-04-12T12:00:00",
+    "steps": [
+      {"advance_sec": 0, "intent": "PRIMARY"},
+      {"advance_sec": 180, "intent": "PRIMARY"},
+      {"advance_sec": 5220, "intent": "PRIMARY"},
+      {"advance_sec": 180, "intent": "PRIMARY"},
+      {"advance_sec": 420, "intent": "PRIMARY"},
+      {"advance_sec": 120, "intent": "PRIMARY"},
+      {"advance_sec": 1560, "intent": "PRIMARY"},
+      {"advance_sec": 120, "intent": "PRIMARY"},
+      {"advance_sec": 0, "intent": "SECONDARY"},
+      {"advance_sec": 840, "intent": "PRIMARY"},
+      {"advance_sec": 120, "intent": "PRIMARY"},
+      {
+        "advance_sec": 840,
+        "expect": {
+          "snapshot": {
+            "depth_text": "20 fsw",
+            "summary_text": "Next: Air break in 00:00",
+            "secondary_button_label": "Off O2"
+          }
+        }
+      },
+      {
+        "advance_sec": 0,
+        "intent": "SECONDARY",
+        "expect": {
+          "snapshot": {
+            "status_value_text": "Off O2",
+            "summary_text": "Next: On O2",
+            "primary_text": "00:00.0",
+            "primary_button_label": "Convert to Air",
+            "secondary_button_label": "On O2"
+          },
+          "recall_contains": ["Off O2 "]
+        }
+      }
+    ]
+  },
+  {
+    "id": "GP-AIR-O2-DELAY-001",
+    "mode": "AIR",
+    "depth_text": "120",
+    "start_time": "2026-04-19T11:06:13",
+    "steps": [
+      {"advance_sec": 0, "intent": "PRIMARY"},
+      {"advance_sec": 126, "intent": "PRIMARY"},
+      {"advance_sec": 3610, "intent": "PRIMARY"},
+      {"advance_sec": 63, "intent": "SECONDARY"},
+      {"advance_sec": 123, "intent": "SECONDARY"},
+      {"advance_sec": 8, "intent": "SECONDARY"},
+      {"advance_sec": 185, "intent": "SECONDARY"},
+      {"advance_sec": 37, "intent": "SECONDARY"},
+      {
+        "advance_sec": 1805,
+        "intent": "SECONDARY",
+        "expect": {
+          "snapshot": {
+            "status_text": "TRAVELING",
+            "summary_text": "Next: 40 fsw for 46 min"
+          },
+          "recall_contains": ["Delay 3 end ", "Schedule updated"]
+        }
+      },
+      {
+        "advance_sec": 71,
+        "intent": "PRIMARY",
+        "expect": {
+          "snapshot": {
+            "depth_text": "40 fsw",
+            "depth_timer_text": "46:00 left",
+            "summary_text": "Next: 30 fsw for 38 min"
+          },
+          "recall_contains": ["R1 "]
+        }
+      }
+    ]
+  },
+  {
+    "id": "GP-SURD-NORMAL-001",
+    "mode": "SURD",
+    "depth_text": "150",
+    "start_time": "2026-04-23T12:00:00",
+    "steps": [
+      {"advance_sec": 0, "intent": "PRIMARY"},
+      {"advance_sec": 180, "intent": "PRIMARY"},
+      {"advance_sec": 2520, "intent": "PRIMARY"},
+      {"advance_sec": 180, "intent": "PRIMARY"},
+      {"advance_sec": 180, "intent": "PRIMARY"},
+      {
+        "advance_sec": 120,
+        "intent": "PRIMARY",
+        "expect": {
+          "snapshot": {
+            "mode_text": "SURD",
+            "depth_text": "40 fsw",
+            "summary_text": "Next: 40 fsw -> Surface",
+            "primary_button_label": "Leave Stop"
+          }
+        }
+      },
+      {
+        "advance_sec": 0,
+        "intent": "PRIMARY",
+        "expect": {
+          "snapshot": {
+            "status_text": "40 -> Surface",
+            "depth_text": "40 fsw",
+            "depth_timer_text": "05:00 left",
+            "summary_text": "Next: Undress",
+            "primary_button_label": "Reach Surface"
+          },
+          "recall_contains": ["SurD start from 40 fsw "]
+        }
+      },
+      {
+        "advance_sec": 60,
+        "intent": "PRIMARY",
+        "expect": {
+          "snapshot": {
+            "status_text": "Undress",
+            "depth_text": "Surface",
+            "summary_text": "Next: Surface -> 50 fsw",
+            "primary_button_label": "Leave Surface"
+          },
+          "recall_contains": ["Undress "]
+        }
+      },
+      {
+        "advance_sec": 60,
+        "intent": "PRIMARY",
+        "expect": {
+          "snapshot": {
+            "status_text": "Surface -> 50 fsw",
+            "depth_text": "50 fsw",
+            "summary_text": "Next: 50 fsw",
+            "primary_button_label": "Reach Bottom"
+          },
+          "recall_contains": ["Traveling Surface -> Chamber 50 "]
+        }
+      },
+      {
+        "advance_sec": 60,
+        "intent": "PRIMARY",
+        "expect": {
+          "snapshot": {
+            "status_text": "50 fsw",
+            "depth_text": "50 fsw",
+            "summary_text": "Next: 50 fsw for 15 min",
+            "secondary_button_label": "On O2"
+          },
+          "recall_contains": ["Chamber 50 "]
+        }
+      },
+      {
+        "advance_sec": 0,
+        "intent": "SECONDARY",
+        "expect": {
+          "snapshot": {
+            "status_text": "50 fsw O2",
+            "summary_text": "Next: 40 fsw for 15 min",
+            "depth_timer_text": "15:00 left",
+            "detail_text": "",
+            "secondary_button_label": "Off O2"
+          },
+          "recall_contains": ["On O2 50 ", "50 fsw O2 "]
+        }
+      },
+      {
+        "advance_sec": 900,
+        "intent": "PRIMARY",
+        "expect": {
+          "snapshot": {
+            "status_text": "40 fsw O2",
+            "summary_text": "First O2 period: 40 fsw segment",
+            "depth_text": "40 fsw",
+            "depth_timer_text": "15:00 left",
+            "primary_button_label": ""
+          }
+        }
+      },
+      {
+        "advance_sec": 0,
+        "intent": "PRIMARY",
+        "expect": {
+          "snapshot": {
+            "status_text": "40 fsw O2",
+            "depth_text": "40 fsw",
+            "summary_text": "First O2 period: 40 fsw segment",
+            "depth_timer_text": "15:00 left",
+            "detail_text": ""
+          },
+          "recall_contains": ["Chamber 40 ", "40 fsw O2 "]
+        }
+      },
+      {
+        "advance_sec": 900,
+        "intent": "PRIMARY",
+        "expect": {
+          "snapshot": {
+            "status_text": "40 fsw Air Break",
+            "summary_text": "Chamber air break",
+            "depth_text": "40 fsw",
+            "depth_timer_text": "05:00 left",
+            "primary_button_label": ""
+          }
+        }
+      },
+      {
+        "advance_sec": 0,
+        "intent": "PRIMARY",
+        "expect": {
+          "snapshot": {
+            "status_text": "40 fsw Air Break",
+            "summary_text": "Chamber air break",
+            "detail_text": "",
+            "depth_timer_text": "05:00 left"
+          },
+          "recall_contains": ["Air break start ", "40 fsw Air Break "]
+        }
+      },
+      {
+        "advance_sec": 300,
+        "intent": "PRIMARY",
+        "expect": {
+          "snapshot": {
+            "status_text": "40 fsw O2",
+            "summary_text": "O2 period 2",
+            "depth_text": "40 fsw",
+            "depth_timer_text": "30:00 left",
+            "primary_button_label": ""
+          }
+        }
+      },
+      {
+        "advance_sec": 0,
+        "intent": "PRIMARY",
+        "expect": {
+          "snapshot": {
+            "status_text": "40 fsw O2",
+            "summary_text": "O2 period 2",
+            "detail_text": "",
+            "depth_timer_text": "30:00 left"
+          }
+        }
+      },
+      {
+        "advance_sec": 1800,
+        "intent": "PRIMARY",
+        "expect": {
+          "snapshot": {
+            "status_text": "CLEAN TIME",
+            "primary_text": "10:00",
+            "depth_text": "Surface",
+            "depth_timer_text": "10:00 left",
+            "summary_text": ""
+          }
+        }
+      },
+      {
+        "advance_sec": 0,
+        "intent": "PRIMARY",
+        "expect": {
+          "snapshot": {
+            "status_text": "CLEAN TIME",
+            "primary_text": "10:00",
+            "depth_text": "Surface"
+          },
+          "recall_contains": ["Surface "]
+        }
+      }
+    ]
+  },
+  {
+    "id": "GP-SURD-PENALTY-001",
+    "mode": "SURD",
+    "depth_text": "150",
+    "start_time": "2026-04-23T12:00:00",
+    "steps": [
+      {"advance_sec": 0, "intent": "PRIMARY"},
+      {"advance_sec": 180, "intent": "PRIMARY"},
+      {"advance_sec": 2520, "intent": "PRIMARY"},
+      {"advance_sec": 180, "intent": "PRIMARY"},
+      {"advance_sec": 180, "intent": "PRIMARY"},
+      {"advance_sec": 120, "intent": "PRIMARY"},
+      {"advance_sec": 0, "intent": "PRIMARY"},
+      {
+        "advance_sec": 310,
+        "expect": {
+          "snapshot": {
+            "primary_value_kind": "warning",
+            "depth_timer_text": "+00:10",
+            "depth_timer_kind": "warning",
+            "summary_text": "Next: Chamber 50 with penalty"
+          }
+        }
+      },
+      {"advance_sec": 0, "intent": "PRIMARY"},
+      {"advance_sec": 0, "intent": "PRIMARY"},
+      {
+        "advance_sec": 0,
+        "intent": "PRIMARY",
+        "expect": {
+          "snapshot": {
+            "status_text": "50 fsw",
+            "summary_text": "Next: 50 fsw for 30 min",
+            "secondary_button_label": "On O2"
+          },
+          "recall_contains": ["Surface interval penalty (+15 O2 @ 50)"]
+        }
+      }
+    ]
+  }
+]
