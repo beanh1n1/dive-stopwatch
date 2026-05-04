@@ -3,10 +3,11 @@ import re
 from pathlib import Path
 import unittest
 
-from dive_stopwatch.core.air_o2_profiles import DecoMode, DelayOutcome, apply_between_stop_delay, apply_first_stop_delay, build_profile, no_decompression_limit
+from dive_stopwatch.engine_v2.domain.air_o2_profiles import DecoMode, DelayOutcome, apply_between_stop_delay, apply_first_stop_delay, build_profile, no_decompression_limit
 
 
 DOCS = Path(__file__).resolve().parents[1] / "docs"
+TABLES = DOCS / "Tables"
 AUDIT = DOCS / "CSV_BOUNDARY_AUDIT.md"
 STOP_COLUMNS = [
     "stop_130",
@@ -25,7 +26,10 @@ STOP_COLUMNS = [
 
 
 def _rows(name: str) -> list[dict[str, str]]:
-    with (DOCS / name).open(newline="") as handle:
+    path = TABLES / name
+    if not path.exists():
+        path = DOCS / name
+    with path.open(newline="") as handle:
         return list(csv.DictReader(handle))
 
 

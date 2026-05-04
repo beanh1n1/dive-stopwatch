@@ -1,0 +1,152 @@
+12-3.1 
+Gas Mixtures. Four gas mixtures are required to dive the surface-supplied mixed
+gas tables over their full range:
+n
+Bottom Mixture - The bottom mixture may vary from 90% helium 10% oxygen
+to 60% helium 40% oxygen depending on the diver’s depth. The allowable
+range of bottom mixtures for each depth is shown in Table 12‑4.
+n
+50% Helium 50% Oxygen - This mixture is used from 90 fsw to 40 fsw during
+decompression. Oxygen concentration in the mixture may range from 49 to 51
+percent.
+n
+100% Oxygen - Oxygen is used at the 30-fsw and 20-fsw water stops during
+inwater decompression and at 50, 40 and 30 fsw in the chamber during surface
+decompression.
+n
+Air - Air is used as an emergency backup gas throughout the dive and to provide
+air breaks during oxygen breathing.
+
+12-4.1 
+Selecting the Bottom Mix. The Surface-Supplied Helium-Oxygen Decompression
+Table (Table 12-4) speci­fis maximum and minimum concentrations of oxygen
+allowable in the helium-oxygen mixture at depth
+
+12-4.4
+Decompression Breathing Gases. Decompress on bottom mixture to 90 fsw, then
+shift the diver to a 50% helium 50% oxygen mixture. Upon arrival at the 30 fsw
+stop, shift the diver to 100% oxygen.
+For all dives, surface decompression may be used after completing the 40 fsw
+water stop as described in paragraph 12‑4.11. During surface decompression, the
+diver surfaces while breathing 50% helium 50% oxygen.
+
+12-4.5
+Special Procedures for Descent with Less than 16 Percent Oxygen. To prevent
+hypoxia, a special descent procedure is required when the bottom mixture contains
+less than 16% oxygen:
+
+1. Place the diver on air on the surface.
+2. Make the appropriate predive checks.
+3. Have the diver descend to 20 fsw.
+4. At 20 fsw, shift the diver to the bottom mix and ventilate the diver for 20
+seconds.
+5. Confirm the diver is on bottom mix, then perform a final leak check. The diver
+is allowed 5 minutes to descend to 20 fsw, shift to the bottom mixture and perform
+equipment checks.
+6. Have the diver begin descent.
+7. Start bottom time.
+n
+If the diver spends 5 minutes or less performing above procedures,
+bottom time starts when the diver leaves 20 fsw.
+n
+If the diver spends more than 5 minutes performing above procedures,
+bottom time starts at the 5 minute mark.
+8. If it is necessary to bring the diver back to the surface from 20 fsw to correct a
+problem:
+n
+Shift the diver from the bottom mixture back to air.
+n
+Ventilate the diver.
+n
+Confirm the diver is on air.
+n
+Have the diver begin ascent.
+n
+When the diver reenters the water, the 5 minute grace period begins
+again. No adjustment of bottom time is required for the previous
+exposure at 20 fsw.
+
+12-4.6
+Aborting Dive During Descent. Inability to equalize the ears or sinuses may force
+the dive to be aborted during descent.
+1. If it is necessary to bring the diver back to the surface from depths of 100 fsw
+and shallower:
+n
+Ensure the diver is in a no-decompression status.
+n
+If the bottom mixture is 16% oxygen or greater, ascend directly to the
+sur­ face at 30 fsw/min.
+n
+If the bottom mixture is less than 16% oxygen, ascend to 20 fsw at
+30 fsw/min.
+n
+Shift the diver from the bottom mixture back to air.
+n
+Ventilate the diver.
+n
+Confirm the diver is on air.
+n
+Complete ascent to the surface on air.
+n
+If desired, another dive may be performed following a dive aborted 100fsw and shallower. Add the bottom time of all the dives to the bottom
+time of the new dive and use the deepest depth when calculating a table
+and schedule for the new dive.
+
+
+2. If it is necessary to abort a dive deeper than 100 fsw:
+n
+Follow the normal decompression schedule to the surface.
+n
+Repetitive diving is not allowed following a dive aborted deeper than 100fsw
+
+12-4.7
+Procedures for Shifting to 50 Percent Helium/50 Percent Oxygen at 90 fsw. All
+dives except no-decompression dives require a shift from bottom mixture to 50%
+helium 50% oxygen at 90 fsw during decompression. Follow these steps:
+1. 2. Shift the console to 50% helium 50% oxygen when the diver reaches 90 fsw.
+If there is a decompression stop at 90 fsw, ventilate each diver for 20 seconds
+at 90 fsw.
+3. 4. Confirm the divers are on 50% helium 50% oxygen.
+If there is no decompression stop at 90 fsw, delay ventilation until arrival at the
+next shallower stop.
+Gas shift time is included in the stop time.
+
+12-4.8
+Procedures for Shifting to 100 Percent Oxygen at 30 fsw. All in-water
+decompression dives require a shift to 100 percent oxygen at the 30-fsw stop.
+Upon arrival at the stop, ventilate each diver with oxygen following these steps:
+1. 2. Shift the console to 100% oxygen when the diver reaches 30 fsw.
+Ventilate each diver for 20 seconds.
+3. Verify the diver’s voice change.
+Time at the 30-fsw stop begins when the divers are confirmed to be on oxygen.
+
+12-4.9
+Air Breaks at 30 and 20 fsw. At the 30-fsw and 20-fsw water stops, the diver
+breathes oxygen for 30-minute periods separated by 5-minute air breaks. The
+air breaks do not count toward required decompression time. When an air break
+is required, shift the console to air for 5 minutes then back to 100% oxygen.
+Ventilation of the divers is not required. For purposes of timing air breaks, begin
+clocking oxygen time when all divers are confirmed on oxygen. If the total oxygen
+stop time is 35 minutes or less, an air break is not required at 30 minutes. If the
+final oxygen period is 35 minutes or less, a final air break at the 30-minute mark is
+not required. In either case, surface the diver on 100% oxygen upon completion of
+the oxygen time.
+
+12-4.10
+Ascent from the 20-fsw Water Stop. For normal in-water decompression, the diver
+surfaces from 20 fsw on oxygen. Ascent rate is 30 fsw/min.
+
+12-4.11
+Surface Decompression on Oxygen (SurDO2). Surface decompression on oxygen
+is preferred over in-water decompression on oxygen for routine operations.
+SurDO2 procedures improve the diver’s comfort and safety. A diver is eligible for
+surface decompression when he has completed the 40-fsw water stop. To initiate
+surface decompression:
+
+
+
+
+
+
+
+

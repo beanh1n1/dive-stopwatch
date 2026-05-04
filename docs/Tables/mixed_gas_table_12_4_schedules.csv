@@ -1,0 +1,267 @@
+depth_fsw,bottom_time_min,gas_mix,time_to_first_stop,stop_190,stop_180,stop_170,stop_160,stop_150,stop_140,stop_130,stop_120,stop_110,stop_100,stop_90,stop_80,stop_70,stop_60,stop_50,stop_40,stop_30,stop_20,total_ascent_time,chamber_o2_periods,section,source_page,notes
+60,10,14.0-40.0,2:00,,,,,,,,,,,,,,,,,,,,,no_decompression,12-31,manual reviewed
+60,20,14.0-40.0,2:00,,,,,,,,,,,,,,,,,,,,,no_decompression,12-31,manual reviewed
+60,30,14.0-40.0,2:00,,,,,,,,,,,,,,,,,,,,,no_decompression,12-31,manual reviewed
+60,40,14.0-40.0,2:00,,,,,,,,,,,,,,,,,,,,,no_decompression,12-31,manual reviewed
+60,60,14.0-40.0,0:40,,,,,,,,,,,,,,,,10,11,16,,1,decompression,12-31,manual reviewed
+60,80,14.0-40.0,0:40,,,,,,,,,,,,,,,,10,13,22,,2,decompression,12-31,manual reviewed
+60,100,14.0-40.0,0:40,,,,,,,,,,,,,,,,10,16,27,,2,decompression,12-31,manual reviewed
+60,120,14.0-40.0,0:40,,,,,,,,,,,,,,,,10,17,28,,2,decompression,12-31,manual reviewed
+70,10,14.0-40.0,2:20,,,,,,,,,,,,,,,,,,,,,no_decompression,12-31,manual reviewed
+70,20,14.0-40.0,2:20,,,,,,,,,,,,,,,,,,,,,no_decompression,12-31,manual reviewed
+70,30,14.0-40.0,2:20,,,,,,,,,,,,,,,,,,,,,no_decompression,12-31,manual reviewed
+70,40,14.0-40.0,1:00,,,,,,,,,,,,,,,,10,10,16,,1,decompression,12-31,manual reviewed
+70,60,14.0-40.0,1:00,,,,,,,,,,,,,,,,10,14,24,,2,decompression,12-31,manual reviewed
+70,80,14.0-40.0,1:00,,,,,,,,,,,,,,,,10,18,30,,2,decompression,12-31,manual reviewed
+70,100,14.0-40.0,1:00,,,,,,,,,,,,,,,,10,19,34,,2,decompression,12-31,manual reviewed
+70,120,14.0-40.0,1:00,,,,,,,,,,,,,,,,10,21,37,,2,decompression,12-31,manual reviewed
+80,10,14.0-38.0,2:40,,,,,,,,,,,,,,,,,,,,,no_decompression,12-31,manual reviewed
+80,20,14.0-38.0,2:40,,,,,,,,,,,,,,,,,,,,,no_decompression,12-31,manual reviewed
+80,25,14.0-38.0,2:40,,,,,,,,,,,,,,,,,,,,,no_decompression,12-31,manual reviewed
+80,30,14.0-38.0,1:20,,,,,,,,,,,,,,,,10,11,16,,1,decompression,12-31,manual reviewed
+80,40,14.0-38.0,1:20,,,,,,,,,,,,,,,,10,13,21,,2,decompression,12-31,manual reviewed
+80,60,14.0-38.0,1:20,,,,,,,,,,,,,,,,10,18,32,,2,decompression,12-31,manual reviewed
+80,80,14.0-38.0,1:20,,,,,,,,,,,,,,,,10,21,38,,2,decompression,12-31,manual reviewed
+80,100,14.0-38.0,1:20,,,,,,,,,,,,,,,,10,24,42,,3,decompression,12-31,manual reviewed
+80,120,14.0-38.0,1:20,,,,,,,,,,,,,,,,10,25,45,,3,decompression,12-31,manual reviewed
+90,10,14.0-34.9,3:00,,,,,,,,,,,,,,,,,,,,,no_decompression,12-31,manual reviewed
+90,20,14.0-34.9,3:00,,,,,,,,,,,,,,,,,,,,,no_decompression,12-31,manual reviewed
+90,30,14.0-34.9,1:40,,,,,,,,,,,,,,,,10,13,21,,2,decompression,12-31,manual reviewed
+90,40,14.0-34.9,1:40,,,,,,,,,,,,,,,,10,16,26,,2,decompression,12-31,manual reviewed
+90,60,14.0-34.9,1:40,,,,,,,,,,,,,,,,10,21,38,,2,decompression,12-31,manual reviewed
+90,80,14.0-34.9,1:40,,,,,,,,,,,,,,,,10,25,45,,3,decompression,12-31,manual reviewed
+90,100,14.0-34.9,1:40,,,,,,,,,,,,,,,,10,28,50,,3,decompression,12-31,manual reviewed
+90,120,14.0-34.9,1:40,,,,,,,,,,,,,,,,10,29,52,,3,decompression,12-31,manual reviewed
+100,10,14.0-32.3,3:20,,,,,,,,,,,,,,,,,,,,,no_decompression,12-32,manual reviewed
+100,15,14.0-32.3,3:20,,,,,,,,,,,,,,,,,,,,,no_decompression,12-32,manual reviewed
+100,20,14.0-32.3,2:00,,,,,,,,,,,,,,,,10,11,17,,1,decompression,12-32,manual reviewed
+100,30,14.0-32.3,2:00,,,,,,,,,,,,,,,,10,15,24,,2,decompression,12-32,manual reviewed
+100,40,14.0-32.3,2:00,,,,,,,,,,,,,,,,10,18,32,,2,decompression,12-32,manual reviewed
+100,60,14.0-32.3,2:00,,,,,,,,,,,,,,,,10,25,44,,3,decompression,12-32,manual reviewed
+100,80,14.0-32.3,2:00,,,,,,,,,,,,,,,,10,28,52,,3,decompression,12-32,manual reviewed
+100,100,14.0-32.3,2:00,,,,,,,,,,,,,,,,10,31,56,,3,decompression,12-32,manual reviewed
+100,120,14.0-32.3,2:00,,,,,,,,,,,,,,,,10,32,58,,3,decompression,12-32,manual reviewed
+110,10,14.0-30.0,2:20,,,,,,,,,,,,,,,,10,8,11,,1,decompression,12-32,manual reviewed
+110,20,14.0-30.0,2:20,,,,,,,,,,,,,,,,10,12,20,,1,decompression,12-32,manual reviewed
+110,30,14.0-30.0,2:20,,,,,,,,,,,,,,,,10,17,28,,2,decompression,12-32,manual reviewed
+110,40,14.0-30.0,2:20,,,,,,,,,,,,,,,,10,20,36,,2,decompression,12-32,manual reviewed
+110,60,14.0-30.0,2:20,,,,,,,,,,,,,,,,10,27,49,,3,decompression,12-32,manual reviewed
+110,80,14.0-30.0,2:20,,,,,,,,,,,,,,,,10,31,58,,3,decompression,12-32,manual reviewed
+110,100,14.0-30.0,2:20,,,,,,,,,,,,,,,,10,33,62,,4,decompression,12-32,manual reviewed
+110,120,14.0-30.0,2:20,,,,,,,,,,,,,,,,10,35,64,,4,decompression,12-32,manual reviewed exceptional exposure
+120,10,14.0-28.0,2:40,,,,,,,,,,,,,,,,10,9,13,,1,decompression,12-32,manual reviewed
+120,20,14.0-28.0,2:40,,,,,,,,,,,,,,,,10,14,23,,2,decompression,12-32,manual reviewed
+120,30,14.0-28.0,2:40,,,,,,,,,,,,,,,,10,19,33,,2,decompression,12-32,manual reviewed
+120,40,14.0-28.0,2:40,,,,,,,,,,,,,,,,10,23,42,,3,decompression,12-32,manual reviewed
+120,60,14.0-28.0,2:40,,,,,,,,,,,,,,,,10,30,55,,3,decompression,12-32,manual reviewed
+120,80,14.0-28.0,2:40,,,,,,,,,,,,,,,,10,34,63,,4,decompression,12-32,manual reviewed
+120,100,14.0-28.0,2:40,,,,,,,,,,,,,,,,10,36,66,,4,decompression,12-32,manual reviewed
+120,120,14.0-28.0,2:20,,,,,,,,,,,,,,,10,10,35,65,,4,decompression,12-32,manual reviewed exceptional exposure
+130,10,14.0-26.3,2:40,,,,,,,,,,,,,,,10,10,6,8,,1,decompression,12-32,manual reviewed
+130,20,14.0-26.3,2:40,,,,,,,,,,,,,,,10,10,12,19,,1,decompression,12-32,manual reviewed
+130,30,14.0-26.3,2:40,,,,,,,,,,,,,,,10,10,18,30,,2,decompression,12-32,manual reviewed
+130,40,14.0-26.3,2:20,,,,,,,,,,,,,,7,10,10,22,40,,2,decompression,12-32,manual reviewed
+130,60,14.0-26.3,2:20,,,,,,,,,,,,,,7,10,10,29,52,,3,decompression,12-32,manual reviewed
+130,80,14.0-26.3,2:20,,,,,,,,,,,,,,7,10,10,33,60,,3,decompression,12-32,manual reviewed
+130,100,14.0-26.3,2:20,,,,,,,,,,,,,,7,10,10,35,64,,4,decompression,12-32,manual reviewed exceptional exposure
+130,120,14.0-26.3,2:20,,,,,,,,,,,,,,7,11,11,35,66,,4,decompression,12-32,manual reviewed exceptional exposure
+140,10,14.0-24.8,3:00,,,,,,,,,,,,,,,10,10,6,8,,1,decompression,12-33,manual reviewed
+140,20,14.0-24.8,3:00,,,,,,,,,,,,,,,10,10,12,19,,1,decompression,12-33,manual reviewed
+140,30,14.0-24.8,3:00,,,,,,,,,,,,,,,10,10,18,30,,2,decompression,12-33,manual reviewed
+140,40,14.0-24.8,2:40,,,,,,,,,,,,,,7,10,10,22,40,,2,decompression,12-33,manual reviewed
+140,60,14.0-24.8,2:40,,,,,,,,,,,,,,7,10,10,29,52,,3,decompression,12-33,manual reviewed
+140,80,14.0-24.8,2:40,,,,,,,,,,,,,,7,10,10,33,60,,3,decompression,12-33,manual reviewed
+140,100,14.0-24.8,2:40,,,,,,,,,,,,,,7,10,10,35,64,,4,decompression,12-33,manual reviewed exceptional exposure
+140,120,14.0-24.8,2:40,,,,,,,,,,,,,,7,11,11,35,66,,4,decompression,12-33,manual reviewed exceptional exposure
+150,10,14.0-23.4,3:20,,,,,,,,,,,,,,,10,10,7,8,,1,decompression,12-33,manual reviewed
+150,20,14.0-23.4,3:00,,,,,,,,,,,,,,7,10,10,14,22,,2,decompression,12-33,manual reviewed
+150,30,14.0-23.4,3:00,,,,,,,,,,,,,,7,10,10,19,34,,2,decompression,12-33,manual reviewed
+150,40,14.0-23.4,3:00,,,,,,,,,,,,,,7,10,10,24,44,,3,decompression,12-33,manual reviewed
+150,60,14.0-23.4,3:00,,,,,,,,,,,,,,7,10,10,31,56,,3,decompression,12-33,manual reviewed
+150,80,14.0-23.4,3:00,,,,,,,,,,,,,,7,10,10,35,64,,4,decompression,12-33,manual reviewed
+150,100,14.0-23.4,3:00,,,,,,,,,,,,,,7,13,13,36,66,,4,decompression,12-33,manual reviewed exceptional exposure
+150,120,14.0-23.4,3:00,,,,,,,,,,,,,,9,16,16,36,66,,5,decompression,12-33,manual reviewed exceptional exposure
+160,10,14.0-22.2,3:20,,,,,,,,,,,,,,7,10,10,8,10,,1,decompression,12-33,manual reviewed
+160,20,14.0-22.2,3:20,,,,,,,,,,,,,,7,10,10,15,24,,2,decompression,12-33,manual reviewed
+160,30,14.0-22.2,3:20,,,,,,,,,,,,,,7,10,10,21,37,,2,decompression,12-33,manual reviewed
+160,40,14.0-22.2,3:20,,,,,,,,,,,,,,7,10,10,26,47,,3,decompression,12-33,manual reviewed
+160,60,14.0-22.2,3:00,,,,,,,,,,,,,7,6,10,10,30,56,,3,decompression,12-33,manual reviewed
+160,80,14.0-22.2,3:00,,,,,,,,,,,,,7,9,10,10,35,66,,4,decompression,12-33,manual reviewed exceptional exposure
+160,100,14.0-22.2,3:00,,,,,,,,,,,,,7,13,14,14,35,66,,5,decompression,12-33,manual reviewed exceptional exposure
+160,120,14.0-22.2,3:00,,,,,,,,,,,,,7,17,17,17,36,66,,5,decompression,12-33,manual reviewed exceptional exposure
+170,10,14.0-21.1,3:20,,,,,,,,,,,,,7,0,10,10,8,12,,1,decompression,12-33,manual reviewed
+170,20,14.0-21.1,3:20,,,,,,,,,,,,,7,0,10,10,16,28,,2,decompression,12-33,manual reviewed
+170,30,14.0-21.1,3:20,,,,,,,,,,,,,7,1,10,10,23,42,,3,decompression,12-33,manual reviewed
+170,40,14.0-21.1,3:20,,,,,,,,,,,,,7,4,10,10,28,52,,3,decompression,12-33,manual reviewed
+170,60,14.0-21.1,3:20,,,,,,,,,,,,,7,10,10,10,33,62,,4,decompression,12-33,manual reviewed
+170,80,14.0-21.1,3:20,,,,,,,,,,,,,9,14,14,14,35,66,,4,decompression,12-33,manual reviewed exceptional exposure
+170,100,14.0-21.1,3:00,,,,,,,,,,,,7,5,18,18,18,36,66,,5,decompression,12-33,manual reviewed exceptional exposure
+170,120,14.0-21.1,3:00,,,,,,,,,,,,7,9,21,21,21,36,66,,5,decompression,12-33,manual reviewed exceptional exposure
+180,10,14.0-20.1,3:40,,,,,,,,,,,,,7,0,10,10,9,14,,1,decompression,12-35,manual reviewed
+180,20,14.0-20.1,3:40,,,,,,,,,,,,,7,0,10,10,17,30,,2,decompression,12-35,manual reviewed
+180,30,14.0-20.1,3:40,,,,,,,,,,,,,7,4,10,10,25,45,,3,decompression,12-35,manual reviewed
+180,40,14.0-20.1,3:20,,,,,,,,,,,,7,0,8,10,10,30,54,,3,decompression,12-35,manual reviewed
+180,60,14.0-20.1,3:20,,,,,,,,,,,,7,5,11,11,11,35,64,,4,decompression,12-35,manual reviewed
+180,80,14.0-20.1,3:20,,,,,,,,,,,,7,9,15,15,15,36,66,,4,decompression,12-35,manual reviewed exceptional exposure
+180,100,14.0-20.1,3:20,,,,,,,,,,,,7,13,19,19,19,36,66,,5,decompression,12-35,manual reviewed exceptional exposure
+180,120,14.0-20.1,3:20,,,,,,,,,,,,7,17,23,23,23,36,66,,6,decompression,12-35,manual reviewed exceptional exposure
+190,10,14.0-19.2,4:00,,,,,,,,,,,,,7,0,10,10,10,15,,1,decompression,12-35,manual reviewed
+190,20,14.0-19.2,3:40,,,,,,,,,,,,7,0,2,10,10,19,34,,2,decompression,12-35,manual reviewed
+190,30,14.0-19.2,3:40,,,,,,,,,,,,7,0,7,10,10,26,46,,3,decompression,12-35,manual reviewed
+190,40,14.0-19.2,3:40,,,,,,,,,,,,7,4,9,10,10,31,56,,3,decompression,12-35,manual reviewed
+190,60,14.0-19.2,3:40,,,,,,,,,,,,7,9,13,13,13,34,62,,4,decompression,12-35,manual reviewed exceptional exposure
+190,80,14.0-19.2,3:20,,,,,,,,,,,7,3,13,18,18,18,36,66,,5,decompression,12-35,manual reviewed exceptional exposure
+190,100,14.0-19.2,3:20,,,,,,,,,,,7,6,16,21,21,21,36,66,,6,decompression,12-35,manual reviewed exceptional exposure
+190,120,14.0-19.2,3:20,,,,,,,,,,,7,8,20,23,23,23,36,66,,7,decompression,12-35,manual reviewed exceptional exposure
+200,10,14.0-18.4,4:00,,,,,,,,,,,,7,0,0,10,10,11,17,,1,decompression,12-35,manual reviewed
+200,20,14.0-18.4,4:00,,,,,,,,,,,,7,0,4,10,10,20,36,,2,decompression,12-35,manual reviewed
+200,30,14.0-18.4,3:40,,,,,,,,,,,7,0,3,7,10,10,27,50,,3,decompression,12-35,manual reviewed
+200,40,14.0-18.4,3:40,,,,,,,,,,,7,0,7,10,10,10,31,58,,3,decompression,12-35,manual reviewed
+200,60,14.0-18.4,3:40,,,,,,,,,,,7,4,10,14,14,14,35,66,,4,decompression,12-35,manual reviewed exceptional exposure
+200,80,14.0-18.4,3:40,,,,,,,,,,,7,8,14,18,18,18,36,66,,5,decompression,12-35,manual reviewed exceptional exposure
+200,100,14.0-18.4,3:40,,,,,,,,,,,7,12,17,23,23,23,36,66,,6,decompression,12-35,manual reviewed exceptional exposure
+200,120,14.0-18.4,3:40,,,,,,,,,,,8,15,21,23,23,23,36,66,,7,decompression,12-35,manual reviewed exceptional exposure
+210,10,10.0-17.7,4:20,,,,,,,,,,,,7,0,0,10,10,12,19,,1,decompression,12-35,manual reviewed
+210,20,10.0-17.7,4:00,,,,,,,,,,,7,0,1,6,10,10,22,38,,2,decompression,12-35,manual reviewed
+210,30,10.0-17.7,4:00,,,,,,,,,,,7,0,6,7,10,10,29,53,,3,decompression,12-35,manual reviewed
+210,40,10.0-17.7,4:00,,,,,,,,,,,7,3,9,10,10,10,33,60,,3,decompression,12-35,manual reviewed
+210,60,10.0-17.7,3:40,,,,,,,,,7,,0,9,11,17,17,17,35,66,,5,decompression,12-35,manual reviewed exceptional exposure
+210,80,10.0-17.7,3:40,,,,,,,,,7,,3,11,15,20,20,20,36,66,,6,decompression,12-35,manual reviewed exceptional exposure
+210,100,10.0-17.7,3:40,,,,,,,,,7,,6,14,19,23,23,23,36,66,,7,decompression,12-35,manual reviewed exceptional exposure
+210,120,10.0-17.7,3:40,,,,,,,,,7,,8,18,23,23,23,23,36,66,,7,decompression,12-35,manual reviewed exceptional exposure
+220,10,10.0-17.0,4:40,,,,,,,,,,,,7,0,2,10,10,13,20,,1,decompression,12-36,manual reviewed
+220,20,10.0-17.0,4:20,,,,,,,,,,,7,0,3,7,10,10,23,41,,3,decompression,12-36,manual reviewed
+220,30,10.0-17.0,4:20,,,,,,,,,,,7,2,6,9,10,10,30,54,,3,decompression,12-36,manual reviewed
+220,40,10.0-17.0,4:00,,,,,,,,,,7,0,6,9,11,11,11,34,62,,4,decompression,12-36,manual reviewed
+220,60,10.0-17.0,4:00,,,,,,,,,,7,4,9,12,18,18,18,36,66,,5,decompression,12-36,manual reviewed exceptional exposure
+220,80,10.0-17.0,4:00,,,,,,,,,,7,8,12,17,21,21,21,36,66,,6,decompression,12-36,manual reviewed exceptional exposure
+220,100,10.0-17.0,4:00,,,,,,,,,,7,12,15,20,23,23,23,36,66,,7,decompression,12-36,manual reviewed exceptional exposure
+220,120,10.0-17.0,4:00,,,,,,,,,,8,14,19,23,23,23,23,36,66,,8,decompression,12-36,manual reviewed exceptional exposure
+230,10,10.0-16.3,4:40,,,,,,,,,,,7,0,0,3,10,10,14,22,,2,decompression,12-36,manual reviewed
+230,20,10.0-16.3,4:20,,,,,,,,,,7,0,3,4,7,10,10,24,44,,3,decompression,12-36,manual reviewed
+230,30,10.0-16.3,4:20,,,,,,,,,,7,0,5,7,10,10,10,31,57,,3,decompression,12-36,manual reviewed
+230,40,10.0-16.3,4:00,,,,,,,,,7,0,3,7,9,13,13,13,34,64,,4,decompression,12-36,manual reviewed
+230,60,10.0-16.3,4:00,,,,,,,,,7,0,8,10,14,18,18,18,36,66,,6,decompression,12-36,manual reviewed exceptional exposure
+230,80,10.0-16.3,4:00,,,,,,,,,7,3,10,14,18,23,23,23,36,66,,7,decompression,12-36,manual reviewed exceptional exposure
+230,100,10.0-16.3,4:00,,,,,,,,,7,6,12,17,23,23,23,23,36,66,,8,decompression,12-36,manual reviewed exceptional exposure
+230,120,10.0-16.3,4:00,,,,,,,,,7,7,16,19,23,23,23,23,36,66,,8,decompression,12-36,manual reviewed exceptional exposure
+240,10,10.0-15.7,4:40,,,,,,,,,,7,0,0,3,4,10,10,14,24,,2,decompression,12-36,manual reviewed
+240,20,10.0-15.7,4:40,,,,,,,,,,7,0,3,5,7,10,10,25,46,,3,decompression,12-36,manual reviewed
+240,30,10.0-15.7,4:20,,,,,,,,,7,0,3,6,7,10,10,10,32,58,,3,decompression,12-36,manual reviewed
+240,40,10.0-15.7,4:20,,,,,,,,,7,0,5,8,9,14,14,14,35,64,,4,decompression,12-36,manual reviewed
+240,60,10.0-15.7,4:20,,,,,,,,,7,4,8,11,14,19,19,19,36,66,,6,decompression,12-36,manual reviewed exceptional exposure
+240,80,10.0-15.7,4:20,,,,,,,,,7,7,11,16,18,23,23,23,36,66,,7,decompression,12-36,manual reviewed exceptional exposure
+240,100,10.0-15.7,4:20,,,,,,,,,7,10,14,19,23,23,23,23,36,66,,8,decompression,12-36,manual reviewed exceptional exposure
+240,120,10.0-15.7,4:00,,,,,,,,7,3,12,17,19,23,23,23,23,36,66,,8,decompression,12-36,manual reviewed exceptional exposure
+250,10,10.0-15.2,5:00,,,,,,,,,,7,0,0,3,4,10,10,15,25,,2,decompression,12-36,manual reviewed
+250,20,10.0-15.2,4:40,,,,,,,,,7,0,0,3,7,7,10,10,26,47,,3,decompression,12-36,manual reviewed
+250,30,10.0-15.2,4:40,,,,,,,,,7,0,4,6,8,10,10,10,32,60,,4,decompression,12-36,manual reviewed
+250,40,10.0-15.2,4:40,,,,,,,,,7,2,5,9,9,14,14,14,35,64,,4,decompression,12-36,manual reviewed
+250,60,10.0-15.2,4:20,,,,,,,,7,0,7,9,12,16,21,21,21,36,66,,6,decompression,12-36,manual reviewed exceptional exposure
+250,80,10.0-15.2,4:20,,,,,,,,7,3,9,13,15,21,23,23,23,36,66,,7,decompression,12-36,manual reviewed exceptional exposure
+250,100,10.0-15.2,4:20,,,,,,,,7,6,11,14,19,23,23,23,23,36,66,,8,decompression,12-36,manual reviewed exceptional exposure
+250,120,10.0-15.2,4:20,,,,,,,,7,8,13,19,20,23,23,23,23,36,66,,8,decompression,12-36,manual reviewed exceptional exposure
+260,10,10.0-14.6,5:00,,,,,,,,,7,0,0,0,4,4,10,10,16,27,,2,decompression,12-37,manual reviewed
+260,20,10.0-14.6,5:00,,,,,,,,,7,0,3,4,6,7,10,10,27,50,,3,decompression,12-37,manual reviewed
+260,30,10.0-14.6,4:40,,,,,,,,,7,0,2,5,6,9,10,10,33,62,,4,decompression,12-37,manual reviewed
+260,40,10.0-14.6,4:40,,,,,,,,7,0,3,8,9,10,15,15,15,35,64,,5,decompression,12-37,manual reviewed
+260,60,10.0-14.6,4:40,,,,,,,,7,3,7,10,14,16,21,21,21,36,66,,6,decompression,12-37,manual reviewed exceptional exposure
+260,80,10.0-14.6,4:40,,,,,,,,7,6,10,13,17,23,23,23,23,36,66,,7,decompression,12-37,manual reviewed exceptional exposure
+260,100,10.0-14.6,4:20,,,,,,,7,2,9,13,16,20,23,23,23,23,36,66,,8,decompression,12-37,manual reviewed exceptional exposure
+260,120,10.0-14.6,4:20,,,,,,,7,4,11,14,19,20,23,23,23,23,36,66,,8,decompression,12-37,manual reviewed exceptional exposure
+270,10,10.0-14.2,5:20,,,,,,,,,7,0,0,3,3,4,10,10,17,28,,2,decompression,12-37,manual reviewed
+270,20,10.0-14.2,5:00,,,,,,,,7,0,0,3,6,6,8,10,10,29,52,,3,decompression,12-37,manual reviewed
+270,30,10.0-14.2,5:00,,,,,,,,7,0,3,6,6,9,13,13,13,34,62,,4,decompression,12-37,manual reviewed
+270,40,10.0-14.2,4:40,,,,,,,7,0,2,5,8,8,12,16,16,16,35,66,,5,decompression,12-37,manual reviewed exceptional exposure
+270,60,10.0-14.2,4:40,,,,,,,7,0,6,8,10,14,19,23,23,23,36,66,,6,decompression,12-37,manual reviewed exceptional exposure
+270,80,10.0-14.2,4:40,,,,,,,7,3,8,11,14,17,23,23,23,23,36,66,,7,decompression,12-37,manual reviewed exceptional exposure
+270,100,10.0-14.2,4:40,,,,,,,7,5,11,13,16,20,23,23,23,23,36,66,,8,decompression,12-37,manual reviewed exceptional exposure
+270,120,10.0-14.2,4:40,,,,,,,7,8,12,16,19,20,23,23,23,23,36,66,,8,decompression,12-37,manual reviewed exceptional exposure
+280,10,10.0-13.7,5:40,,,,,,,,,,7,0,0,3,4,10,10,18,31,,2,decompression,12-37,manual reviewed
+280,20,10.0-13.7,5:20,,,,,,,,,7,0,0,4,6,7,10,10,30,54,,3,decompression,12-37,manual reviewed
+280,30,10.0-13.7,5:00,,,,,,,,7,0,1,5,5,9,12,12,12,35,64,,4,decompression,12-37,manual reviewed
+280,40,10.0-13.7,5:00,,,,,,,7,0,4,6,8,9,12,17,17,17,35,66,,5,decompression,12-37,manual reviewed exceptional exposure
+280,60,10.0-13.7,5:00,,,,,,,7,4,6,8,12,15,18,23,23,23,36,66,,7,decompression,12-37,manual reviewed exceptional exposure
+280,80,10.0-13.7,4:40,,,,,,,7,0,7,9,11,15,17,23,23,23,36,66,,8,decompression,12-37,manual reviewed exceptional exposure
+280,100,10.0-13.7,4:40,,,,,,,7,2,9,11,15,17,20,23,23,23,36,66,,8,decompression,12-37,manual reviewed exceptional exposure
+280,120,10.0-13.7,4:40,,,,,,,7,4,11,13,16,19,20,23,23,23,36,66,,8,decompression,12-37,manual reviewed exceptional exposure
+290,10,10.0-13.3,5:40,,,,,,,,7,0,0,0,4,3,4,10,10,19,33,,2,decompression,12-37,manual reviewed
+290,20,10.0-13.3,5:20,,,,,,,7,0,0,2,6,6,6,9,10,10,30,56,,3,decompression,12-37,manual reviewed
+290,30,10.0-13.3,5:20,,,,,,,7,0,2,5,5,9,9,14,14,14,34,63,,5,decompression,12-37,manual reviewed
+290,40,10.0-13.3,5:20,,,,,,,7,0,5,7,8,11,13,17,17,17,35,66,,5,decompression,12-37,manual reviewed exceptional exposure
+290,60,10.0-13.3,5:00,,,,,,7,0,6,7,9,12,15,20,23,23,23,36,66,,7,decompression,12-37,manual reviewed exceptional exposure
+290,80,10.0-13.3,5:00,,,,,,,7,2,8,10,12,16,19,23,23,23,36,66,,8,decompression,12-37,manual reviewed exceptional exposure
+290,100,10.0-13.3,5:00,,,,,,,7,5,10,12,15,19,20,23,23,23,36,66,,8,decompression,12-37,manual reviewed exceptional exposure
+290,120,10.0-13.3,5:00,,,,,,,7,8,11,16,17,19,20,23,23,23,36,66,,8,decompression,12-37,manual reviewed exceptional exposure
+300,10,10.0-12.9,6:00,,,,,,,,7,0,0,0,4,3,4,10,10,19,33,,2,decompression,12-38,manual reviewed
+300,20,10.0-12.9,5:40,,,,,,,7,0,0,2,6,6,6,9,10,10,30,56,,3,decompression,12-38,manual reviewed
+300,30,10.0-12.9,5:40,,,,,,,7,0,2,5,5,9,9,14,14,14,34,63,,5,decompression,12-38,manual reviewed
+300,40,10.0-12.9,5:40,,,,,,,7,0,5,7,8,11,13,17,17,17,35,66,,6,decompression,12-38,manual reviewed exceptional exposure
+300,60,10.0-12.9,5:20,,,,,,7,0,6,7,9,12,15,20,23,23,23,36,66,,7,decompression,12-38,manual reviewed exceptional exposure
+300,80,10.0-12.9,5:20,,,,,,7,2,8,10,12,16,19,23,23,23,23,36,66,,8,decompression,12-38,manual reviewed exceptional exposure
+300,100,10.0-12.9,5:20,,,,,,7,5,10,12,15,19,20,23,23,23,23,36,66,,8,decompression,12-38,manual reviewed exceptional exposure
+300,120,10.0-12.9,5:20,,,,,,7,8,11,16,17,19,20,23,23,23,23,36,66,,8,decompression,12-38,manual reviewed exceptional exposure
+310,10,10.0-12.5,6:00,,,,,,,7,0,0,0,3,3,3,7,10,10,21,36,,2,decompression,12-38,manual reviewed
+310,20,10.0-12.5,5:40,,,,,,,7,0,0,2,4,5,6,7,10,10,31,57,,4,decompression,12-38,manual reviewed
+310,30,10.0-12.5,5:40,,,,,,,7,0,2,4,5,7,8,11,15,15,35,66,,5,decompression,12-38,manual reviewed
+310,40,10.0-12.5,5:20,,,,,7,0,1,4,6,7,8,12,15,19,19,19,36,66,,7,decompression,12-38,manual reviewed exceptional exposure
+310,60,10.0-12.5,5:20,,,,,7,0,5,6,9,11,13,17,20,23,23,23,36,66,,8,decompression,12-38,manual reviewed exceptional exposure
+310,80,10.0-12.5,5:20,,,,,7,3,7,9,11,13,17,20,23,23,23,23,36,66,,8,decompression,12-38,manual reviewed exceptional exposure
+310,100,10.0-12.5,5:20,,,,,7,5,9,11,13,17,19,20,23,23,23,23,36,66,,8,decompression,12-38,manual reviewed exceptional exposure
+310,120,10.0-12.5,5:20,,,,,7,7,12,13,16,17,19,20,23,23,23,23,36,66,,8,decompression,12-38,manual reviewed exceptional exposure
+320,10,10.0-12.2,6:20,,,,,,,7,0,0,0,4,3,3,7,10,10,21,38,,2,decompression,12-38,manual reviewed
+320,20,10.0-12.2,6:00,,,,,,7,0,0,3,5,5,6,8,10,10,10,32,59,,4,decompression,12-38,manual reviewed
+320,30,10.0-12.2,5:40,,,,,7,0,0,4,4,6,7,9,11,17,17,17,35,66,,5,decompression,12-38,manual reviewed
+320,40,10.0-12.2,5:40,,,,,7,0,4,4,6,7,9,12,16,20,20,20,36,66,,6,decompression,12-38,manual reviewed exceptional exposure
+320,60,10.0-12.2,5:20,,,,7,0,2,6,8,9,11,14,17,23,23,23,23,36,66,,8,decompression,12-38,manual reviewed exceptional exposure
+320,80,10.0-12.2,5:20,,,,7,0,6,8,8,13,14,19,20,23,23,23,23,36,66,,8,decompression,12-38,manual reviewed exceptional exposure
+320,100,10.0-12.2,5:20,,,,7,2,7,10,13,16,17,19,20,23,23,23,23,36,66,,8,decompression,12-38,manual reviewed exceptional exposure
+320,120,10.0-12.2,5:20,,,,7,4,9,12,13,16,17,19,20,23,23,23,23,36,66,,8,decompression,12-38,manual reviewed exceptional exposure
+330,10,10.0-11.8,6:20,,,,,,7,0,0,0,2,3,3,4,7,10,10,22,40,,2,decompression,12-38,manual reviewed
+330,20,10.0-11.8,6:00,,,,,7,0,0,2,3,4,6,5,10,10,10,10,33,60,,4,decompression,12-38,manual reviewed
+330,30,10.0-11.8,6:00,,,,,7,0,1,4,5,6,8,8,13,17,17,17,35,66,,6,decompression,12-38,manual reviewed
+330,40,10.0-11.8,5:40,,,,7,0,1,4,5,7,7,10,12,17,22,22,22,36,66,,7,decompression,12-38,manual reviewed exceptional exposure
+330,60,10.0-11.8,5:40,,,,7,0,5,6,8,9,11,15,20,23,23,23,23,36,66,,8,decompression,12-38,manual reviewed exceptional exposure
+330,80,10.0-11.8,5:40,,,,7,2,7,8,10,13,15,19,20,23,23,23,23,36,66,,8,decompression,12-38,manual reviewed exceptional exposure
+330,100,10.0-11.8,5:40,,,,7,5,9,9,13,16,17,19,20,23,23,23,23,36,66,,8,decompression,12-38,manual reviewed exceptional exposure
+330,120,10.0-11.8,5:20,,,7,1,7,10,13,15,16,17,19,20,23,23,23,23,36,66,,8,decompression,12-38,manual reviewed exceptional exposure
+340,10,10.0-11.5,6:40,,,,,,7,0,0,0,3,3,3,4,7,10,10,23,41,,3,decompression,12-39,manual reviewed exceptional exposure
+340,20,10.0-11.5,6:20,,,,,7,0,0,2,4,5,7,8,9,10,10,10,33,60,,5,decompression,12-39,manual reviewed exceptional exposure
+340,30,10.0-11.5,6:00,,,,7,0,0,3,5,5,6,8,9,13,18,18,18,35,66,,6,decompression,12-39,manual reviewed exceptional exposure
+340,40,10.0-11.5,6:00,,,,7,0,2,4,6,7,8,10,13,16,22,22,22,36,66,,7,decompression,12-39,manual reviewed exceptional exposure
+340,60,10.0-11.5,5:40,,,7,0,3,5,6,9,10,13,16,18,21,23,23,23,36,66,,8,decompression,12-39,manual reviewed exceptional exposure
+340,80,10.0-11.5,5:40,,,7,0,7,7,8,11,13,15,19,20,23,23,23,23,36,66,,8,decompression,12-39,manual reviewed exceptional exposure
+340,100,10.0-11.5,5:40,,,7,2,8,8,12,13,16,17,19,20,23,23,23,23,36,66,,8,decompression,12-39,manual reviewed exceptional exposure
+340,120,10.0-11.5,5:40,,,7,4,9,11,13,15,16,17,19,20,23,23,23,23,36,66,,8,decompression,12-39,manual reviewed exceptional exposure
+350,10,10.0-11.2,6:40,,,,,7,0,0,0,2,2,3,3,5,7,10,10,24,43,,3,decompression,12-39,manual reviewed exceptional exposure
+350,20,10.0-11.2,6:20,,,,7,0,0,0,4,4,5,5,7,9,13,13,13,33,63,,5,decompression,12-39,manual reviewed exceptional exposure
+350,30,10.0-11.2,6:20,,,,7,0,1,4,4,5,7,8,11,13,18,18,18,36,66,,6,decompression,12-39,manual reviewed exceptional exposure
+350,40,10.0-11.2,6:00,,,7,0,1,3,5,6,7,8,11,14,17,23,23,23,36,66,,7,decompression,12-39,manual reviewed exceptional exposure
+350,60,10.0-11.2,6:00,,,7,0,5,5,8,8,11,12,16,19,23,23,23,23,36,66,,8,decompression,12-39,manual reviewed exceptional exposure
+350,80,10.0-11.2,6:00,,,7,2,7,7,10,11,13,17,19,20,23,23,23,23,36,66,,8,decompression,12-39,manual reviewed exceptional exposure
+350,100,10.0-11.2,5:40,,7,0,6,8,9,11,15,16,17,19,20,23,23,23,23,36,66,,8,decompression,12-39,manual reviewed exceptional exposure
+350,120,10.0-11.2,5:40,,7,1,7,9,12,14,15,16,17,19,20,23,23,23,23,36,66,,8,decompression,12-39,manual reviewed exceptional exposure
+360,10,10.0-10.9,7:00,,,,,7,0,0,0,2,2,3,3,7,7,10,10,25,44,,3,decompression,12-39,manual reviewed exceptional exposure
+360,20,10.0-10.9,6:40,,,7,0,0,0,2,3,4,5,5,8,10,13,13,13,34,63,,5,decompression,12-39,manual reviewed exceptional exposure
+360,30,10.0-10.9,6:20,,,7,0,0,3,3,5,6,7,8,11,13,19,19,19,36,66,,7,decompression,12-39,manual reviewed exceptional exposure
+360,40,10.0-10.9,6:20,,,7,0,2,4,5,7,7,9,10,14,20,23,23,23,36,66,,8,decompression,12-39,manual reviewed exceptional exposure
+360,60,10.0-10.9,6:20,,,7,0,4,5,7,8,9,11,13,17,20,23,23,23,36,66,,8,decompression,12-39,manual reviewed exceptional exposure
+360,80,10.0-10.9,6:00,,7,0,3,6,6,8,11,12,14,16,19,20,23,23,23,36,66,,8,decompression,12-39,manual reviewed exceptional exposure
+360,100,10.0-10.9,6:00,,7,2,7,8,11,13,13,16,17,19,20,23,23,23,23,36,66,,8,decompression,12-39,manual reviewed exceptional exposure
+360,120,10.0-10.9,6:00,,7,4,8,10,12,14,15,16,17,19,20,23,23,23,23,36,66,,8,decompression,12-39,manual reviewed exceptional exposure
+370,10,10.0-10.6,7:00,,,,,7,0,0,0,3,3,3,3,7,7,10,10,25,46,,3,decompression,12-40,manual reviewed exceptional exposure
+370,20,10.0-10.6,6:40,,,,7,0,0,3,4,4,5,5,8,10,13,13,13,34,63,,5,decompression,12-40,manual reviewed exceptional exposure
+370,30,10.0-10.6,6:20,,7,0,0,2,3,4,4,7,7,8,11,16,19,19,19,36,66,,7,decompression,12-40,manual reviewed exceptional exposure
+370,40,10.0-10.6,6:20,,7,0,0,4,4,5,6,8,10,11,14,20,23,23,23,36,66,,8,decompression,12-40,manual reviewed exceptional exposure
+370,60,10.0-10.6,6:20,,7,0,4,5,7,8,9,11,13,17,20,23,23,23,23,36,66,,8,decompression,12-40,manual reviewed exceptional exposure
+370,80,10.0-10.6,6:00,7,0,3,6,7,9,10,12,15,17,19,20,23,23,23,23,36,66,,8,decompression,12-40,manual reviewed exceptional exposure
+370,100,10.0-10.6,6:00,7,0,6,7,9,10,14,15,16,17,19,20,23,23,23,23,36,66,,8,decompression,12-40,manual reviewed exceptional exposure
+370,120,10.0-10.6,6:00,7,1,7,9,11,13,14,15,16,17,19,20,23,23,23,23,36,66,,8,decompression,12-40,manual reviewed exceptional exposure
+380,10,10.0-10.4,7:20,,,,,7,0,0,0,3,3,3,3,7,7,10,10,25,46,,3,decompression,12-40,manual reviewed exceptional exposure
+380,20,10.0-10.4,7:00,,,,7,0,0,3,4,4,5,5,8,10,13,13,13,34,63,,6,decompression,12-40,manual reviewed exceptional exposure
+380,30,10.0-10.4,6:40,,7,0,0,2,3,4,4,7,7,8,11,16,19,19,19,36,66,,7,decompression,12-40,manual reviewed exceptional exposure
+380,40,10.0-10.4,6:40,,7,0,0,4,4,5,6,8,10,11,14,20,23,23,23,36,66,,8,decompression,12-40,manual reviewed exceptional exposure
+380,60,10.0-10.4,6:40,,7,0,4,5,7,8,9,11,13,17,20,23,23,23,23,36,66,,8,decompression,12-40,manual reviewed exceptional exposure
+380,80,10.0-10.4,6:20,7,0,3,6,7,9,10,12,15,17,19,20,23,23,23,23,36,66,,8,decompression,12-40,manual reviewed exceptional exposure
+380,100,10.0-10.4,6:20,7,0,6,7,9,10,14,15,16,17,19,20,23,23,23,23,36,66,,8,decompression,12-40,manual reviewed exceptional exposure
+380,120,10.0-10.4,6:20,7,1,7,9,11,13,14,15,16,17,19,20,23,23,23,23,36,66,,8,decompression,12-40,manual reviewed exceptional exposure

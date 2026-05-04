@@ -1,0 +1,32 @@
+[
+  {
+    "id": "HC-SURD-L40-001",
+    "mode": "SURD",
+    "depth_text": "150",
+    "start_time": "2026-04-23T12:00:00",
+    "steps": [
+      {"advance_sec": 0, "intent": "PRIMARY"},
+      {"advance_sec": 180, "intent": "PRIMARY"},
+      {"advance_sec": 2520, "intent": "PRIMARY"},
+      {"advance_sec": 180, "intent": "PRIMARY"},
+      {"advance_sec": 180, "intent": "PRIMARY"},
+      {"advance_sec": 120, "intent": "PRIMARY"},
+      {
+        "advance_sec": 0,
+        "intent": "PRIMARY",
+        "expect_handoff": {
+          "entry_kind": "L40_NORMAL",
+          "source_mode_text": "SURD",
+          "input_depth_fsw": 150,
+          "input_bottom_time_min": 45,
+          "source_profile_schedule_text": "150 / 45 Z",
+          "source_table_depth_fsw": 150,
+          "source_table_bottom_time_min": 45,
+          "left_water_stop_depth_fsw": 40,
+          "remaining_in_water_obligation_sec": 0.0,
+          "phase_name": "SURFACE_ASCENT"
+        }
+      }
+    ]
+  }
+]

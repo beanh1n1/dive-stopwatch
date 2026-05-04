@@ -13,8 +13,9 @@ dev = ["pytest>=8.0"]
 mobile = ["flet[all]>=0.28,<0.29"]
 
 [project.scripts]
-dive-stopwatch = "dive_stopwatch.core:main"
-dive-stopwatch-mobile = "dive_stopwatch.mobile.main:main"
+dive-stopwatch = "dive_stopwatch.mobile.main_v2:main"
+dive-stopwatch-mobile = "dive_stopwatch.mobile.main_v2:main"
+dive-stopwatch-mobile-v2 = "dive_stopwatch.mobile.main_v2:main"
 
 [tool.setuptools]
 package-dir = {"" = "src"}
